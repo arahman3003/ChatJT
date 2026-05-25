@@ -61,6 +61,10 @@
     .chat-header{min-height:76px;padding:16px 20px;background:rgba(2,6,23,.92);border-bottom:1px solid rgba(148,163,184,.2);display:flex;justify-content:space-between;align-items:center;gap:12px}
     .chat-title{font-size:21px;font-weight:bold;margin-bottom:4px}
     .chat-subtitle{color:#94a3b8;font-size:13px}
+    .header-actions{display:flex;align-items:center;gap:8px}
+    .invite-btn{display:none;background:#2563eb;color:#fff;border-radius:12px;padding:9px 12px;font-size:12px}
+    .invite-btn.show{display:inline-flex}
+    .invite-btn:hover{background:#1d4ed8}
     .status{font-size:12px;padding:7px 10px;border-radius:999px;background:#1e293b;color:#cbd5e1;white-space:nowrap}
     .status.online{background:rgba(34,197,94,.15);color:#86efac;border:1px solid rgba(34,197,94,.35)}
     .messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px}
@@ -119,6 +123,15 @@
     .profile-popup-meta{color:#94a3b8;font-size:13px;margin-top:4px}
     .image-modal-img{max-width:min(92vw,900px);max-height:85vh;border-radius:16px;box-shadow:0 25px 80px rgba(0,0,0,.7)}
     .image-modal-card{position:relative}
+
+    
+    .invite-list{max-height:360px;overflow-y:auto;margin-top:10px}
+    .invite-user-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;border-radius:12px;background:#111827;border:1px solid rgba(148,163,184,.14);margin-bottom:8px}
+    .invite-user-info{min-width:0}
+    .invite-user-name{font-weight:bold;font-size:13px}
+    .invite-user-meta{color:#94a3b8;font-size:12px;margin-top:3px}
+    .invite-user-btn{background:#22c55e;color:#fff;border-radius:10px;padding:8px 10px;font-size:12px}
+    .invite-user-btn.added{background:#334155;color:#94a3b8;cursor:not-allowed}
 
     @media(max-width:760px){
       .sidebar{position:fixed;z-index:10;left:-330px;top:0;transition:.25s;box-shadow:20px 0 50px rgba(0,0,0,.45)}
@@ -215,7 +228,10 @@
           <span class="chat-title" id="chatTitle">Pilih Chat</span>
           <div class="chat-subtitle" id="chatSubtitle">Pilih user untuk chat pribadi atau pilih grup.</div>
         </div>
-        <div class="status" id="statusText">Menghubungkan...</div>
+        <div class="header-actions">
+          <button class="invite-btn" id="inviteBtn" type="button" onclick="openInviteModal()">Undang</button>
+          <div class="status" id="statusText">Menghubungkan...</div>
+        </div>
       </div>
 
       <div class="messages" id="messages"><p class="empty">Pilih chat dulu.</p></div>
@@ -280,6 +296,16 @@
   </div>
 
 
+  <div class="modal" id="inviteModal">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeInviteModal()">×</button>
+      <div class="modal-title">Undang User ke Grup</div>
+      <input class="modal-input" type="text" id="inviteSearchInput" placeholder="Cari nama user..." oninput="renderInviteUsers()">
+      <div class="invite-list" id="inviteUsersList"></div>
+    </div>
+  </div>
+
+
   <script>
     const SUPABASE_URL = "https://wbzxsvhlhbzusyzbjamp.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_55Jwsh0iRWj-BUAvds_MOQ_NEkwcU0p";
@@ -293,6 +319,7 @@
     const usersTabBtn = document.getElementById("usersTabBtn"), groupsTabBtn = document.getElementById("groupsTabBtn"), usersPanel = document.getElementById("usersPanel"), groupsPanel = document.getElementById("groupsPanel");
     const usersList = document.getElementById("usersList"), groupsList = document.getElementById("groupsList"), addGroupBox = document.getElementById("addGroupBox"), newGroupName = document.getElementById("newGroupName"), searchInput = document.getElementById("searchInput");
     const chatTitle = document.getElementById("chatTitle"), chatSubtitle = document.getElementById("chatSubtitle"), messagesDiv = document.getElementById("messages"), chatForm = document.getElementById("chatForm"), messageInput = document.getElementById("messageInput"), statusText = document.getElementById("statusText"), sidebar = document.getElementById("sidebar");
+    const inviteBtn = document.getElementById("inviteBtn"), inviteModal = document.getElementById("inviteModal"), inviteSearchInput = document.getElementById("inviteSearchInput"), inviteUsersList = document.getElementById("inviteUsersList");
     const fileInput = document.getElementById("fileInput"), filePreview = document.getElementById("filePreview"), filePreviewText = document.getElementById("filePreviewText");
     const myAvatar = document.getElementById("myAvatar");
     const profileSettingsModal = document.getElementById("profileSettingsModal"), settingsDisplayName = document.getElementById("settingsDisplayName"), settingsPassword = document.getElementById("settingsPassword"), settingsAvatarFile = document.getElementById("settingsAvatarFile");
@@ -302,7 +329,7 @@
     const editPreview = document.getElementById("editPreview"), editPreviewText = document.getElementById("editPreviewText");
 
     let currentUser=null,currentTargetUser=null,currentGroup=null,currentMode="private",activeTab="users";
-    let allUsers=[],visibleUsers=[],allGroups=[],realtimeStarted=false;
+    let allUsers=[],visibleUsers=[],allGroups=[],myGroupIds=[],currentGroupMembers=[],realtimeStarted=false;
     let unreadPrivate={}, unreadGroups={};
     let selectedFile=null, replyTo=null, editingMessage=null;
 
@@ -332,7 +359,23 @@
     function escapeHtml(text){const div=document.createElement("div");div.textContent=text||"";return div.innerHTML}
     function shortText(text,max=80){text=String(text||"");return text.length>max?text.slice(0,max)+"...":text}
     function formatTime(dateString){const date=new Date(dateString);return date.toLocaleString("id-ID",{hour:"2-digit",minute:"2-digit",day:"2-digit",month:"short"})}
-    function canManageGroups(){const role=String(currentUser?.role||"").trim().toLowerCase();return role==="admin"||role==="leader"}
+    function canManageGroups(){
+      const role=String(currentUser?.role||"").trim().toLowerCase();
+      return role==="admin"||role==="leader";
+    }
+
+    function canInviteToCurrentGroup(){
+      if(!currentUser || !currentGroup)return false;
+      if(canManageGroups())return true;
+      return currentGroupMembers.some(function(member){
+        return member.user_id === currentUser.id;
+      });
+    }
+
+    function updateInviteButton(){
+      if(!inviteBtn)return;
+      inviteBtn.classList.toggle("show", currentMode === "group" && !!currentGroup && canInviteToCurrentGroup());
+    }
     function makeConversationKey(a,b){const ids=[Number(a),Number(b)].sort((x,y)=>x-y);return ids[0]+"_"+ids[1]}
     function isImage(type,name){return String(type||"").startsWith("image/") || /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(String(name||""))}
 
@@ -421,6 +464,7 @@
       listRefreshTimer = setInterval(async function(){
         if(!currentUser)return;
         await loadUsers();
+        await loadMyGroupIds();
         await loadGroups();
         if(activeTab === "users") renderUsers();
         if(activeTab === "groups") renderGroups();
@@ -485,6 +529,7 @@
       addGroupBox.classList.toggle("show", canManageGroups());
 
       await loadUsers();
+      await loadMyGroupIds();
       await loadGroups();
 
       switchTab("users");
@@ -590,17 +635,49 @@
       });
     }
 
+    async function loadMyGroupIds(){
+      const {data,error}=await supabaseClient
+        .from("group_members")
+        .select("group_id")
+        .eq("user_id", currentUser.id);
+
+      if(error){
+        myGroupIds=[];
+        return;
+      }
+
+      myGroupIds=(data||[]).map(function(row){ return row.group_id; });
+    }
+
     async function loadGroups(){
-      const {data,error}=await supabaseClient.from("groups").select("*").order("created_at",{ascending:true});
-      if(error){groupsList.innerHTML=`<p class="error">Gagal memuat grup: ${escapeHtml(error.message)}</p>`;return}
-      allGroups=data||[]; renderGroups();
+      const {data,error}=await supabaseClient
+        .from("groups")
+        .select("*")
+        .order("created_at",{ascending:true});
+
+      if(error){
+        groupsList.innerHTML=`<p class="error">Gagal memuat grup: ${escapeHtml(error.message)}</p>`;
+        return;
+      }
+
+      const role=String(currentUser?.role||"").trim().toLowerCase();
+
+      if(role==="admin" || role==="leader"){
+        allGroups=data||[];
+      }else{
+        allGroups=(data||[]).filter(function(group){
+          return myGroupIds.includes(group.id);
+        });
+      }
+
+      renderGroups();
     }
 
     function renderGroups(){
       const keyword=searchInput.value.trim().toLowerCase();
       const filtered=allGroups.filter(g=>String(g.name||"").toLowerCase().includes(keyword));
       groupsList.innerHTML="";
-      if(!filtered.length){groupsList.innerHTML=`<p class="empty">Grup tidak ditemukan.</p>`;return}
+      if(!filtered.length){groupsList.innerHTML=`<p class="empty">${keyword ? "Grup tidak ditemukan." : "Belum ada grup. Leader/Admin bisa membuat grup baru."}</p>`;return}
       filtered.forEach(group=>{
         const div=document.createElement("div"); div.className="group-item";
         if(currentGroup&&currentGroup.id===group.id&&currentMode==="group") div.classList.add("active");
@@ -612,11 +689,41 @@
     }
 
     async function createGroup(){
-      if(!canManageGroups()){alert("Hanya Admin atau Leader yang bisa menambahkan grup.");return}
-      const name=newGroupName.value.trim(); if(!name){alert("Nama grup tidak boleh kosong.");return}
-      const {data,error}=await supabaseClient.from("groups").insert([{name,created_by:currentUser.id}]).select().single();
-      if(error){alert("Gagal menambah grup: "+error.message);return}
-      newGroupName.value=""; allGroups.push(data); renderGroups(); selectGroup(data.id);
+      if(!canManageGroups()){
+        alert("Hanya Admin atau Leader yang bisa menambahkan grup.");
+        return;
+      }
+
+      const name=newGroupName.value.trim();
+      if(!name){
+        alert("Nama grup tidak boleh kosong.");
+        return;
+      }
+
+      const {data,error}=await supabaseClient
+        .from("groups")
+        .insert([{name,created_by:currentUser.id}])
+        .select()
+        .single();
+
+      if(error){
+        alert("Gagal menambah grup: "+error.message);
+        return;
+      }
+
+      await supabaseClient
+        .from("group_members")
+        .insert([{
+          group_id:data.id,
+          user_id:currentUser.id,
+          invited_by:currentUser.id
+        }]);
+
+      newGroupName.value="";
+      if(!myGroupIds.includes(data.id)) myGroupIds.push(data.id);
+      allGroups.push(data);
+      renderGroups();
+      selectGroup(data.id);
     }
 
     async function selectUser(userId){
@@ -644,10 +751,25 @@
     }
 
     async function selectGroup(groupId){
-      currentGroup=allGroups.find(g=>g.id===groupId); if(!currentGroup)return;
-      currentMode="group"; currentTargetUser=null; unreadGroups[groupId]=0; cancelReply(); cancelEdit(); clearFile(false);
-      chatTitle.textContent="# "+currentGroup.name; chatSubtitle.textContent="Room chat grup: "+currentGroup.name;
-      renderGroups(); sidebar.classList.remove("open"); await loadGroupMessages();
+      currentGroup=allGroups.find(g=>g.id===groupId);
+      if(!currentGroup)return;
+
+      currentMode="group";
+      currentTargetUser=null;
+      unreadGroups[groupId]=0;
+      cancelReply();
+      cancelEdit();
+      clearFile(false);
+
+      await loadCurrentGroupMembers();
+
+      chatTitle.textContent="# "+currentGroup.name;
+      chatSubtitle.textContent="Room chat grup: "+currentGroup.name;
+
+      updateInviteButton();
+      renderGroups();
+      sidebar.classList.remove("open");
+      await loadGroupMessages();
     }
 
     async function loadPrivateMessages(){
@@ -965,6 +1087,108 @@
       }
     }
 
+    async function loadCurrentGroupMembers(){
+      if(!currentGroup){
+        currentGroupMembers=[];
+        return;
+      }
+
+      const {data,error}=await supabaseClient
+        .from("group_members")
+        .select("group_id,user_id,invited_by")
+        .eq("group_id", currentGroup.id);
+
+      if(error){
+        currentGroupMembers=[];
+        return;
+      }
+
+      currentGroupMembers=data||[];
+    }
+
+    function openInviteModal(){
+      if(!currentGroup){
+        alert("Pilih grup dulu.");
+        return;
+      }
+
+      if(!canInviteToCurrentGroup()){
+        alert("Kamu belum punya akses untuk mengundang user ke grup ini.");
+        return;
+      }
+
+      inviteSearchInput.value="";
+      inviteModal.classList.add("show");
+      renderInviteUsers();
+    }
+
+    function closeInviteModal(){
+      inviteModal.classList.remove("show");
+    }
+
+    function renderInviteUsers(){
+      if(!currentGroup)return;
+
+      const keyword=inviteSearchInput.value.trim().toLowerCase();
+      const memberIds=new Set(currentGroupMembers.map(function(member){ return member.user_id; }));
+
+      const filtered=allUsers.filter(function(user){
+        const text=(user.display_name+" "+user.username+" "+user.role).toLowerCase();
+        return text.includes(keyword);
+      });
+
+      inviteUsersList.innerHTML="";
+
+      if(!filtered.length){
+        inviteUsersList.innerHTML=`<p class="empty">User tidak ditemukan.</p>`;
+        return;
+      }
+
+      filtered.forEach(function(user){
+        const alreadyMember=memberIds.has(user.id);
+        const row=document.createElement("div");
+        row.className="invite-user-row";
+        row.innerHTML=`
+          <div class="invite-user-info">
+            <div class="invite-user-name">${escapeHtml(user.display_name)}</div>
+            <div class="invite-user-meta">@${escapeHtml(user.username)} • ${escapeHtml(user.role)}</div>
+          </div>
+          <button class="invite-user-btn ${alreadyMember ? "added" : ""}" ${alreadyMember ? "disabled" : ""} onclick="inviteUserToGroup(${user.id})">
+            ${alreadyMember ? "Sudah" : "Undang"}
+          </button>
+        `;
+        inviteUsersList.appendChild(row);
+      });
+    }
+
+    async function inviteUserToGroup(userId){
+      if(!currentGroup){
+        alert("Pilih grup dulu.");
+        return;
+      }
+
+      const {error}=await supabaseClient
+        .from("group_members")
+        .insert([{
+          group_id:currentGroup.id,
+          user_id:userId,
+          invited_by:currentUser.id
+        }]);
+
+      if(error){
+        if(String(error.message||"").toLowerCase().includes("duplicate")){
+          alert("User sudah ada di grup.");
+        }else{
+          alert("Gagal mengundang user: "+error.message);
+        }
+        return;
+      }
+
+      await loadCurrentGroupMembers();
+      renderInviteUsers();
+      alert("User berhasil diundang ke grup.");
+    }
+
     function startRealtime(){
       if(realtimeStarted)return; realtimeStarted=true;
       supabaseClient.channel("forum-pro-realtime")
@@ -1000,6 +1224,20 @@
         })
         .on("postgres_changes",{event:"INSERT",schema:"public",table:"groups"},payload=>{
           if(!allGroups.some(g=>g.id===payload.new.id)){allGroups.push(payload.new);renderGroups()}
+        })
+        .on("postgres_changes",{event:"INSERT",schema:"public",table:"group_members"},async payload=>{
+          const member=payload.new;
+
+          if(member.user_id===currentUser.id){
+            if(!myGroupIds.includes(member.group_id)) myGroupIds.push(member.group_id);
+            await loadGroups();
+          }
+
+          if(currentGroup && member.group_id===currentGroup.id){
+            await loadCurrentGroupMembers();
+            updateInviteButton();
+            if(inviteModal.classList.contains("show")) renderInviteUsers();
+          }
         })
         .on("postgres_changes",{event:"UPDATE",schema:"public",table:"users"},payload=>{
           const updated = payload.new;
