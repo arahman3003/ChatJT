@@ -11,7 +11,7 @@
     button{border:none;cursor:pointer;transition:.2s;font-weight:bold}
     button:hover{transform:translateY(-1px)}
     input{border:none;outline:none;color:#fff}
-    .login-page{min-height:100vh;display:flex;justify-content:center;align-items:center;padding:18px;background:radial-gradient(circle at top left,rgba(34,197,94,.15),transparent 30%),radial-gradient(circle at bottom right,rgba(56,189,248,.13),transparent 30%),#020617}
+    .login-page{min-height:100vh;display:none;justify-content:center;align-items:center;padding:18px;background:radial-gradient(circle at top left,rgba(34,197,94,.15),transparent 30%),radial-gradient(circle at bottom right,rgba(56,189,248,.13),transparent 30%),#020617}
     .login-card{width:100%;max-width:410px;background:rgba(15,23,42,.97);border:1px solid rgba(148,163,184,.25);border-radius:22px;padding:24px;box-shadow:0 25px 60px rgba(0,0,0,.6)}
     .login-card h1{margin:0 0 6px;font-size:25px}
     .login-card p{margin:0 0 20px;color:#94a3b8;font-size:14px}
@@ -89,6 +89,12 @@
     .empty,.error{color:#94a3b8;text-align:center;margin-top:20px}
     .error{color:#f87171}
     .mobile-toggle{display:none;background:#1e293b;color:#fff;padding:9px 11px;border-radius:10px;margin-right:8px}
+    .loading-overlay{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(2,6,23,.45);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+    .loading-box{background:rgba(15,23,42,.88);border:1px solid rgba(148,163,184,.25);border-radius:18px;padding:22px 26px;box-shadow:0 20px 50px rgba(0,0,0,.45);text-align:center;min-width:220px}
+    .loader{width:34px;height:34px;border-radius:50%;border:3px solid rgba(148,163,184,.25);border-top-color:#22c55e;margin:0 auto 12px;animation:spin .8s linear infinite}
+    .loading-title{font-weight:bold;font-size:15px;margin-bottom:4px}
+    .loading-subtitle{color:#94a3b8;font-size:12px}
+    @keyframes spin{to{transform:rotate(360deg)}}
     @media(max-width:760px){
       .sidebar{position:fixed;z-index:10;left:-330px;top:0;transition:.25s;box-shadow:20px 0 50px rgba(0,0,0,.45)}
       .sidebar.open{left:0}
@@ -105,6 +111,14 @@
 </head>
 
 <body>
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-box">
+      <div class="loader"></div>
+      <div class="loading-title">Memuat Chat...</div>
+      <div class="loading-subtitle">Mohon tunggu sebentar</div>
+    </div>
+  </div>
+
   <div class="login-page" id="loginPage">
     <div class="login-card">
       <h1>Login Forum Chat</h1>
@@ -200,6 +214,7 @@
     const BUCKET_NAME = "chat-files";
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    const loadingOverlay = document.getElementById("loadingOverlay");
     const loginPage = document.getElementById("loginPage"), app = document.getElementById("app");
     const loginForm = document.getElementById("loginForm"), loginUsername = document.getElementById("loginUsername"), loginPassword = document.getElementById("loginPassword"), loginError = document.getElementById("loginError");
     const profileName = document.getElementById("profileName"), profileRole = document.getElementById("profileRole");
@@ -215,6 +230,16 @@
     let unreadPrivate={}, unreadGroups={};
     let selectedFile=null, replyTo=null, editingMessage=null;
 
+    function hideLoading(){
+      if(loadingOverlay) loadingOverlay.style.display = "none";
+    }
+
+    function showLoginPage(){
+      hideLoading();
+      loginPage.style.display = "flex";
+      app.style.display = "none";
+    }
+
     const savedUser = localStorage.getItem("forum_user_pro");
     if(savedUser){
       try {
@@ -222,7 +247,10 @@
         restoreSession();
       } catch(e) {
         localStorage.removeItem("forum_user_pro");
+        showLoginPage();
       }
+    } else {
+      showLoginPage();
     }
 
     function escapeHtml(text){const div=document.createElement("div");div.textContent=text||"";return div.innerHTML}
@@ -344,7 +372,7 @@
 
       if(error || !data){
         localStorage.removeItem("forum_user_pro");
-        location.reload();
+        showLoginPage();
         return;
       }
 
@@ -356,6 +384,7 @@
     async function openApp(){
       loginPage.style.display="none";
       app.style.display="flex";
+      hideLoading();
 
       profileName.textContent = currentUser.display_name || currentUser.username || "User";
       profileRole.textContent = currentUser.role || "Member";
