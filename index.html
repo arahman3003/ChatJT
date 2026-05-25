@@ -317,8 +317,8 @@
 
   <div class="toast-wrap" id="toastWrap"></div>
 
-  <div class="modal" id="groupSettingsModal">
-    <div class="group-settings-card">
+  <div class="modal" id="groupSettingsModal" onclick="closeGroupSettings()">
+    <div class="group-settings-card" onclick="event.stopPropagation()">
       <div class="group-settings-head">
         <div class="group-settings-title">
           <img class="group-icon" id="settingsGroupAvatar" src="" alt="Group">
@@ -371,8 +371,8 @@
     </div>
   </div>
 
-  <div class="modal" id="profileSettingsModal">
-    <div class="modal-card">
+  <div class="modal" id="profileSettingsModal" onclick="closeProfileSettings()">
+    <div class="modal-card" onclick="event.stopPropagation()">
       <button class="modal-close" onclick="closeProfileSettings()">×</button>
       <div class="modal-title">Pengaturan Profil</div>
       <label>Nama Tampilan</label>
@@ -385,8 +385,8 @@
     </div>
   </div>
 
-  <div class="modal" id="userProfileModal">
-    <div class="modal-card">
+  <div class="modal" id="userProfileModal" onclick="closeUserProfile()">
+    <div class="modal-card" onclick="event.stopPropagation()">
       <button class="modal-close" onclick="closeUserProfile()">×</button>
       <div class="profile-popup-head">
         <img class="profile-popup-avatar" id="popupAvatar" src="" alt="Avatar">
@@ -407,8 +407,8 @@
   </div>
 
 
-  <div class="modal" id="inviteModal">
-    <div class="modal-card">
+  <div class="modal" id="inviteModal" onclick="closeInviteModal()">
+    <div class="modal-card" onclick="event.stopPropagation()">
       <button class="modal-close" onclick="closeInviteModal()">×</button>
       <div class="modal-title">Undang User ke Grup</div>
       <input class="modal-input" type="text" id="inviteSearchInput" placeholder="Cari nama user..." oninput="renderInviteUsers()">
@@ -1581,6 +1581,21 @@
       });
     }
 
+
+    function closeAllModals(){
+      if(profileSettingsModal) profileSettingsModal.classList.remove("show");
+      if(userProfileModal) userProfileModal.classList.remove("show");
+      if(inviteModal) inviteModal.classList.remove("show");
+      if(groupSettingsModal) groupSettingsModal.classList.remove("show");
+      if(imageModal){
+        imageModal.classList.remove("show");
+        imageModalImg.src = "";
+      }
+    }
+
+    document.addEventListener("keydown", function(e){
+      if(e.key === "Escape") closeAllModals();
+    });
 
     function startRealtime(){
       if(realtimeStarted)return; realtimeStarted=true;
