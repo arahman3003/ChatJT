@@ -84,6 +84,17 @@
     .mini-btn.delete:hover{background:rgba(239,68,68,.22);color:#fecaca}
     .mini-btn svg{width:15px;height:15px;stroke:currentColor}
     .text{font-size:15px;line-height:1.45;white-space:pre-wrap}
+    .text.emoji-only{line-height:1.2;letter-spacing:.02em;word-break:break-word}
+    .text.emoji-only.size-xl{font-size:44px}
+    .text.emoji-only.size-lg{font-size:36px}
+    .text.emoji-only.size-md{font-size:30px}
+    .text.emoji-only.size-sm{font-size:24px}
+    @media(max-width:760px){
+      .text.emoji-only.size-xl{font-size:38px}
+      .text.emoji-only.size-lg{font-size:32px}
+      .text.emoji-only.size-md{font-size:27px}
+      .text.emoji-only.size-sm{font-size:22px}
+    }
     .time{margin-top:7px;font-size:11px;color:#94a3b8;text-align:right}
     .reply-box{border-left:3px solid #22c55e;background:rgba(15,23,42,.55);padding:7px 9px;border-radius:9px;margin-bottom:8px;color:#cbd5e1;font-size:12px}
     .reply-name{color:#86efac;font-weight:bold;margin-bottom:3px}
@@ -2091,6 +2102,36 @@ function canManageGroups(){
       renderMessageList(data,error,"Belum ada pesan di grup ini.");
     }
 
+
+    function isEmojiOnlyMessage(text){
+      if(!text) return false;
+      const trimmed = String(text).trim();
+      if(!trimmed) return false;
+      const compact = trimmed.replace(/\s+/gu, "");
+
+      try{
+        return /^(?:\p{Extended_Pictographic}|\p{Emoji_Component}|\u200D|\uFE0F)+$/u.test(compact);
+      }catch(e){
+        return /^[\u203C-\u3299\u00A9\u00AE\u200D\uFE0F\s]+$/u.test(compact);
+      }
+    }
+
+    function emojiOnlySizeClass(text){
+      const compact = String(text || "").trim().replace(/\s+/gu, "");
+      let count = 0;
+      try{
+        const matches = compact.match(/\p{Extended_Pictographic}/gu);
+        count = matches ? matches.length : compact.length;
+      }catch(e){
+        count = Array.from(compact).length;
+      }
+
+      if(count <= 3) return "size-xl";
+      if(count <= 6) return "size-lg";
+      if(count <= 10) return "size-md";
+      return "size-sm";
+    }
+
     function renderMessageList(data,error,emptyText){
       if(error){
         messagesDiv.innerHTML=`<p class="error">Gagal memuat pesan: ${escapeHtml(error.message)}</p>`;
@@ -2166,6 +2207,8 @@ function canManageGroups(){
       const replyHtml=data.reply_to_text?`<div class="reply-box"><div class="reply-name">${escapeHtml(displayReplyName(data.reply_to_display_name||"Pesan"))}</div><div>${escapeHtml(shortText(data.reply_to_text,90))}</div></div>`:"";
       const fileHtml=(!deleted&&data.file_url)?renderFileHtml(data):"";
       const edited=data.edited_at&&!deleted?" • diedit":"";
+      const emojiOnly = !deleted && isEmojiOnlyMessage(data.message || "");
+      const textClass = emojiOnly ? `text emoji-only ${emojiOnlySizeClass(data.message || "")}` : "text";
 
       div.innerHTML=`
         <div class="msg-top">
@@ -2184,7 +2227,7 @@ function canManageGroups(){
           </div>
         </div>
         ${replyHtml}
-        <div class="text">${deleted?"<i>Pesan telah dihapus</i>":escapeHtml(data.message||"")}</div>
+        <div class="${textClass}">${deleted?"<i>Pesan telah dihapus</i>":escapeHtml(data.message||"")}</div>
         ${fileHtml}
         <div class="time">${formatTime(data.created_at)}${edited}</div>
       `;
