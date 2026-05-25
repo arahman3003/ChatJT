@@ -126,11 +126,11 @@
 
     
     .invite-list{max-height:360px;overflow-y:auto;margin-top:10px}
-    .invite-user-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;border-radius:12px;background:#111827;border:1px solid rgba(148,163,184,.14);margin-bottom:8px}
+    .invite-user-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 9px;border-radius:10px;background:#111827;border:1px solid rgba(148,163,184,.12);margin-bottom:6px}
     .invite-user-info{min-width:0}
-    .invite-user-name{font-weight:bold;font-size:13px}
-    .invite-user-meta{color:#94a3b8;font-size:12px;margin-top:3px}
-    .invite-user-btn{background:#22c55e;color:#fff;border-radius:10px;padding:8px 10px;font-size:12px}
+    .invite-user-name{font-weight:bold;font-size:12px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .invite-user-meta{color:#94a3b8;font-size:10.5px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .invite-user-btn{background:#22c55e;color:#fff;border-radius:9px;padding:6px 8px;font-size:11px;white-space:nowrap}
     .invite-user-btn.added{background:#334155;color:#94a3b8;cursor:not-allowed}
 
     
@@ -148,17 +148,17 @@
     .tool-btn{width:38px;height:38px;border-radius:12px;background:linear-gradient(180deg,#3b82f6,#2563eb);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 8px 18px rgba(37,99,235,.28)}
     .tool-btn:hover{filter:brightness(1.05)}
 
-    .group-settings-card{width:100%;max-width:560px;background:#0f172a;border:1px solid rgba(148,163,184,.22);border-radius:18px;box-shadow:0 25px 70px rgba(0,0,0,.6);overflow:hidden}
-    .group-settings-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;padding:18px 18px 14px;border-bottom:1px solid rgba(148,163,184,.16)}
+    .group-settings-card{width:100%;max-width:560px;max-height:88vh;background:#0f172a;border:1px solid rgba(148,163,184,.22);border-radius:18px;box-shadow:0 25px 70px rgba(0,0,0,.6);overflow:hidden;display:flex;flex-direction:column}
+    .group-settings-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;padding:14px 16px 12px;border-bottom:1px solid rgba(148,163,184,.16);flex-shrink:0}
     .group-settings-title{display:flex;gap:12px;align-items:center}
     .group-icon{width:44px;height:44px;border-radius:50%;object-fit:cover;background:#1e293b;border:1px solid rgba(148,163,184,.22)}
     .group-title-main{font-size:18px;font-weight:bold}
     .group-title-sub{font-size:12px;color:#94a3b8;margin-top:3px}
-    .group-tabs{display:flex;border-bottom:1px solid rgba(148,163,184,.16)}
-    .group-tab-btn{flex:1;padding:12px;background:#0f172a;color:#94a3b8;border-radius:0;border-bottom:2px solid transparent}
+    .group-tabs{display:flex;border-bottom:1px solid rgba(148,163,184,.16);flex-shrink:0}
+    .group-tab-btn{flex:1;padding:10px;background:#0f172a;color:#94a3b8;border-radius:0;border-bottom:2px solid transparent;font-size:12px}
     .group-tab-btn.active{color:#93c5fd;border-bottom-color:#3b82f6;background:#111827}
-    .group-tab-panel{display:none;padding:18px}
-    .group-tab-panel.active{display:block}
+    .group-tab-panel{display:none;padding:14px 16px;overflow:hidden;min-height:0}
+    .group-tab-panel.active{display:block;min-height:0}
     .settings-section-title{font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px}
     .group-avatar-row{display:flex;align-items:center;gap:14px;margin-bottom:18px}
     .group-avatar-large{width:72px;height:72px;border-radius:50%;object-fit:cover;background:#1e293b;border:1px solid rgba(148,163,184,.22)}
@@ -168,12 +168,19 @@
     .danger-btn:hover{background:#b91c1c}
     .group-name-row{display:flex;gap:8px;align-items:center}
     .group-name-input{flex:1;background:#1e293b;color:#fff;border-radius:12px;padding:11px;border:1px solid rgba(148,163,184,.16)}
-    .member-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;border-radius:12px;background:#111827;border:1px solid rgba(148,163,184,.14);margin-bottom:8px}
+    .member-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 9px;border-radius:10px;background:#111827;border:1px solid rgba(148,163,184,.12);margin-bottom:6px}
     .member-info{min-width:0}
-    .member-name{font-weight:bold;font-size:13px}
-    .member-meta{color:#94a3b8;font-size:12px;margin-top:3px}
+    .member-name{font-weight:bold;font-size:12px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .member-meta{color:#94a3b8;font-size:10.5px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    #groupMembersList{max-height:48vh;overflow-y:auto;padding-right:5px}
+    #groupAddUsersList{max-height:42vh;overflow-y:auto;padding-right:5px}
+    #groupMembersList::-webkit-scrollbar,#groupAddUsersList::-webkit-scrollbar,.invite-list::-webkit-scrollbar{width:7px}
+    #groupMembersList::-webkit-scrollbar-thumb,#groupAddUsersList::-webkit-scrollbar-thumb,.invite-list::-webkit-scrollbar-thumb{background:#475569;border-radius:999px}
 
     @media(max-width:760px){
+      .group-settings-card{max-height:92vh}
+      #groupMembersList{max-height:52vh}
+      #groupAddUsersList{max-height:46vh}
       .chat-tools{width:100%;margin-top:8px}
       .chat-search{width:100%;max-width:none}
 
