@@ -3,461 +3,97 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Forum Chat Private & Grup</title>
-
+  <title>Forum Chat Pro</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
   <style>
-    * {
-      box-sizing: border-box;
-      font-family: Arial, sans-serif;
-    }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background: #020617;
-      color: white;
-    }
-
-    button {
-      border: none;
-      cursor: pointer;
-      transition: 0.2s;
-      font-weight: bold;
-    }
-
-    button:hover {
-      transform: translateY(-1px);
-    }
-
-    input {
-      border: none;
-      outline: none;
-      color: white;
-    }
-
-    .login-page {
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 18px;
-      background:
-        radial-gradient(circle at top left, rgba(34, 197, 94, 0.15), transparent 30%),
-        radial-gradient(circle at bottom right, rgba(56, 189, 248, 0.13), transparent 30%),
-        #020617;
-    }
-
-    .login-card {
-      width: 100%;
-      max-width: 410px;
-      background: rgba(15, 23, 42, 0.97);
-      border: 1px solid rgba(148, 163, 184, 0.25);
-      border-radius: 22px;
-      padding: 24px;
-      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
-    }
-
-    .login-card h1 {
-      margin: 0 0 6px;
-      font-size: 25px;
-    }
-
-    .login-card p {
-      margin: 0 0 20px;
-      color: #94a3b8;
-      font-size: 14px;
-    }
-
-    .form-group {
-      margin-bottom: 13px;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 7px;
-      color: #cbd5e1;
-      font-size: 13px;
-      font-weight: bold;
-    }
-
-    .login-card input {
-      width: 100%;
-      padding: 13px;
-      border-radius: 12px;
-      background: #1e293b;
-      font-size: 15px;
-    }
-
-    .login-card input::placeholder,
-    .chat-input::placeholder,
-    .group-input::placeholder,
-    .search-input::placeholder {
-      color: #94a3b8;
-    }
-
-    .login-btn {
-      width: 100%;
-      margin-top: 5px;
-      padding: 13px;
-      border-radius: 12px;
-      background: #22c55e;
-      color: white;
-    }
-
-    .login-btn:hover {
-      background: #16a34a;
-    }
-
-    .error-text {
-      color: #f87171;
-      font-size: 13px;
-      margin-top: 12px;
-      min-height: 18px;
-    }
-
-    .app {
-      display: none;
-      width: 100%;
-      height: 100vh;
-      overflow: hidden;
-      background: #020617;
-    }
-
-    .sidebar {
-      width: 320px;
-      min-width: 320px;
-      height: 100vh;
-      background: #0f172a;
-      border-right: 1px solid rgba(148, 163, 184, 0.2);
-      display: flex;
-      flex-direction: column;
-    }
-
-    .profile {
-      padding: 18px;
-      border-bottom: 1px solid rgba(148, 163, 184, 0.18);
-      background: rgba(2, 6, 23, 0.65);
-    }
-
-    .profile-name {
-      font-size: 17px;
-      font-weight: bold;
-      margin-bottom: 4px;
-    }
-
-    .profile-role {
-      display: inline-block;
-      font-size: 12px;
-      padding: 5px 9px;
-      border-radius: 999px;
-      color: #86efac;
-      border: 1px solid rgba(34, 197, 94, 0.35);
-      background: rgba(34, 197, 94, 0.12);
-    }
-
-    .logout-btn {
-      margin-top: 13px;
-      background: #334155;
-      color: white;
-      padding: 9px 12px;
-      border-radius: 10px;
-      width: 100%;
-    }
-
-    .logout-btn:hover {
-      background: #475569;
-    }
-
-    .tabs {
-      display: flex;
-      gap: 8px;
-      padding: 14px 14px 8px;
-    }
-
-    .tab-btn {
-      flex: 1;
-      padding: 10px;
-      border-radius: 12px;
-      background: #1e293b;
-      color: #cbd5e1;
-    }
-
-    .tab-btn.active {
-      background: #22c55e;
-      color: white;
-    }
-
-    .search-box {
-      padding: 0 14px 14px;
-      border-bottom: 1px solid rgba(148, 163, 184, 0.18);
-    }
-
-    .search-input {
-      width: 100%;
-      padding: 11px 12px;
-      border-radius: 12px;
-      background: #1e293b;
-      font-size: 14px;
-    }
-
-    .sidebar-content {
-      flex: 1;
-      overflow-y: auto;
-      padding: 14px;
-    }
-
-    .section-title {
-      font-size: 12px;
-      color: #94a3b8;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      margin-bottom: 10px;
-    }
-
-    .user-item,
-    .group-item {
-      padding: 12px;
-      border-radius: 14px;
-      background: #111827;
-      border: 1px solid rgba(148, 163, 184, 0.12);
-      margin-bottom: 10px;
-      cursor: pointer;
-    }
-
-    .user-item:hover,
-    .user-item.active,
-    .group-item:hover,
-    .group-item.active {
-      background: #14532d;
-      border-color: rgba(134, 239, 172, 0.35);
-    }
-
-    .item-name {
-      font-weight: bold;
-      font-size: 14px;
-      margin-bottom: 4px;
-    }
-
-    .item-meta {
-      font-size: 12px;
-      color: #94a3b8;
-      line-height: 1.4;
-    }
-
-    .add-group-box {
-      display: none;
-      padding: 14px;
-      border-top: 1px solid rgba(148, 163, 184, 0.18);
-      background: rgba(2, 6, 23, 0.45);
-    }
-
-    .add-group-box.show {
-      display: block;
-    }
-
-    .group-input {
-      width: 100%;
-      padding: 12px;
-      border-radius: 12px;
-      background: #1e293b;
-      margin-bottom: 8px;
-    }
-
-    .add-group-btn {
-      width: 100%;
-      padding: 11px;
-      border-radius: 12px;
-      background: #22c55e;
-      color: white;
-    }
-
-    .add-group-btn:hover {
-      background: #16a34a;
-    }
-
-    .main {
-      flex: 1;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      background:
-        radial-gradient(circle at top left, rgba(34, 197, 94, 0.08), transparent 28%),
-        radial-gradient(circle at bottom right, rgba(56, 189, 248, 0.08), transparent 28%),
-        #0b1220;
-    }
-
-    .chat-header {
-      min-height: 76px;
-      padding: 16px 20px;
-      background: rgba(2, 6, 23, 0.92);
-      border-bottom: 1px solid rgba(148, 163, 184, 0.2);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .chat-title {
-      font-size: 21px;
-      font-weight: bold;
-      margin-bottom: 4px;
-    }
-
-    .chat-subtitle {
-      color: #94a3b8;
-      font-size: 13px;
-    }
-
-    .status {
-      font-size: 12px;
-      padding: 7px 10px;
-      border-radius: 999px;
-      background: #1e293b;
-      color: #cbd5e1;
-      white-space: nowrap;
-    }
-
-    .status.online {
-      background: rgba(34, 197, 94, 0.15);
-      color: #86efac;
-      border: 1px solid rgba(34, 197, 94, 0.35);
-    }
-
-    .messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .message {
-      background: #1e293b;
-      padding: 12px 14px;
-      border-radius: 16px;
-      max-width: 72%;
-      word-wrap: break-word;
-      border: 1px solid rgba(148, 163, 184, 0.12);
-      align-self: flex-start;
-    }
-
-    .message.me {
-      align-self: flex-end;
-      background: #14532d;
-      border-color: rgba(134, 239, 172, 0.25);
-    }
-
-    .message .user {
-      font-weight: bold;
-      color: #38bdf8;
-      margin-bottom: 6px;
-      font-size: 14px;
-    }
-
-    .message.me .user {
-      color: #86efac;
-    }
-
-    .message .text {
-      font-size: 15px;
-      line-height: 1.45;
-      white-space: pre-wrap;
-    }
-
-    .message .time {
-      margin-top: 7px;
-      font-size: 11px;
-      color: #94a3b8;
-      text-align: right;
-    }
-
-    .chat-form {
-      display: flex;
-      gap: 10px;
-      padding: 15px;
-      border-top: 1px solid rgba(148, 163, 184, 0.2);
-      background: #0f172a;
-    }
-
-    .chat-input {
-      flex: 1;
-      padding: 13px;
-      border-radius: 12px;
-      background: #1e293b;
-      font-size: 15px;
-    }
-
-    .send-btn {
-      padding: 13px 18px;
-      border-radius: 12px;
-      background: #22c55e;
-      color: white;
-    }
-
-    .send-btn:hover {
-      background: #16a34a;
-    }
-
-    .empty,
-    .error {
-      color: #94a3b8;
-      text-align: center;
-      margin-top: 20px;
-    }
-
-    .error {
-      color: #f87171;
-    }
-
-    .mobile-toggle {
-      display: none;
-      background: #1e293b;
-      color: white;
-      padding: 9px 11px;
-      border-radius: 10px;
-      margin-right: 8px;
-    }
-
-    @media (max-width: 760px) {
-      .app {
-        position: relative;
-      }
-
-      .sidebar {
-        position: fixed;
-        z-index: 10;
-        left: -330px;
-        top: 0;
-        transition: 0.25s;
-        box-shadow: 20px 0 50px rgba(0, 0, 0, 0.45);
-      }
-
-      .sidebar.open {
-        left: 0;
-      }
-
-      .mobile-toggle {
-        display: inline-block;
-      }
-
-      .message {
-        max-width: 92%;
-      }
-
-      .chat-header {
-        padding: 12px;
-      }
-
-      .chat-title {
-        font-size: 18px;
-      }
-
-      .messages {
-        padding: 12px;
-      }
+    *{box-sizing:border-box;font-family:Arial,sans-serif}
+    body{margin:0;min-height:100vh;background:#020617;color:#fff}
+    button{border:none;cursor:pointer;transition:.2s;font-weight:bold}
+    button:hover{transform:translateY(-1px)}
+    input{border:none;outline:none;color:#fff}
+    .login-page{min-height:100vh;display:flex;justify-content:center;align-items:center;padding:18px;background:radial-gradient(circle at top left,rgba(34,197,94,.15),transparent 30%),radial-gradient(circle at bottom right,rgba(56,189,248,.13),transparent 30%),#020617}
+    .login-card{width:100%;max-width:410px;background:rgba(15,23,42,.97);border:1px solid rgba(148,163,184,.25);border-radius:22px;padding:24px;box-shadow:0 25px 60px rgba(0,0,0,.6)}
+    .login-card h1{margin:0 0 6px;font-size:25px}
+    .login-card p{margin:0 0 20px;color:#94a3b8;font-size:14px}
+    .form-group{margin-bottom:13px}
+    label{display:block;margin-bottom:7px;color:#cbd5e1;font-size:13px;font-weight:bold}
+    .login-card input{width:100%;padding:13px;border-radius:12px;background:#1e293b;font-size:15px}
+    input::placeholder{color:#94a3b8}
+    .login-btn{width:100%;margin-top:5px;padding:13px;border-radius:12px;background:#22c55e;color:#fff}
+    .login-btn:hover,.send-btn:hover,.add-group-btn:hover,.small-green:hover{background:#16a34a}
+    .error-text{color:#f87171;font-size:13px;margin-top:12px;min-height:18px}
+    .app{display:none;width:100%;height:100vh;overflow:hidden;background:#020617}
+    .sidebar{width:320px;min-width:320px;height:100vh;background:#0f172a;border-right:1px solid rgba(148,163,184,.2);display:flex;flex-direction:column}
+    .profile{padding:18px;border-bottom:1px solid rgba(148,163,184,.18);background:rgba(2,6,23,.65)}
+    .profile-name{font-size:17px;font-weight:bold;margin-bottom:4px}
+    .profile-role{display:inline-block;font-size:12px;padding:5px 9px;border-radius:999px;color:#86efac;border:1px solid rgba(34,197,94,.35);background:rgba(34,197,94,.12)}
+    .logout-btn{margin-top:13px;background:#334155;color:#fff;padding:9px 12px;border-radius:10px;width:100%}
+    .logout-btn:hover{background:#475569}
+    .tabs{display:flex;gap:8px;padding:14px 14px 8px}
+    .tab-btn{flex:1;padding:10px;border-radius:12px;background:#1e293b;color:#cbd5e1}
+    .tab-btn.active{background:#22c55e;color:#fff}
+    .search-box{padding:0 14px 14px;border-bottom:1px solid rgba(148,163,184,.18)}
+    .search-input{width:100%;padding:11px 12px;border-radius:12px;background:#1e293b;font-size:14px}
+    .sidebar-content{flex:1;overflow-y:auto;padding:14px}
+    .section-title{font-size:12px;color:#94a3b8;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px}
+    .user-item,.group-item{padding:12px;border-radius:14px;background:#111827;border:1px solid rgba(148,163,184,.12);margin-bottom:10px;cursor:pointer;position:relative}
+    .user-item:hover,.user-item.active,.group-item:hover,.group-item.active{background:#14532d;border-color:rgba(134,239,172,.35)}
+    .item-name{font-weight:bold;font-size:14px;margin-bottom:4px;padding-right:34px}
+    .item-meta{font-size:12px;color:#94a3b8;line-height:1.4}
+    .badge{position:absolute;right:10px;top:10px;min-width:22px;height:22px;border-radius:999px;background:#ef4444;color:#fff;font-size:12px;display:none;align-items:center;justify-content:center;padding:0 6px}
+    .badge.show{display:flex}
+    .add-group-box{display:none;padding:14px;border-top:1px solid rgba(148,163,184,.18);background:rgba(2,6,23,.45)}
+    .add-group-box.show{display:block}
+    .group-input{width:100%;padding:12px;border-radius:12px;background:#1e293b;margin-bottom:8px}
+    .add-group-btn,.small-green{background:#22c55e;color:#fff}
+    .add-group-btn{width:100%;padding:11px;border-radius:12px}
+    .main{flex:1;height:100vh;display:flex;flex-direction:column;background:radial-gradient(circle at top left,rgba(34,197,94,.08),transparent 28%),radial-gradient(circle at bottom right,rgba(56,189,248,.08),transparent 28%),#0b1220}
+    .chat-header{min-height:76px;padding:16px 20px;background:rgba(2,6,23,.92);border-bottom:1px solid rgba(148,163,184,.2);display:flex;justify-content:space-between;align-items:center;gap:12px}
+    .chat-title{font-size:21px;font-weight:bold;margin-bottom:4px}
+    .chat-subtitle{color:#94a3b8;font-size:13px}
+    .status{font-size:12px;padding:7px 10px;border-radius:999px;background:#1e293b;color:#cbd5e1;white-space:nowrap}
+    .status.online{background:rgba(34,197,94,.15);color:#86efac;border:1px solid rgba(34,197,94,.35)}
+    .messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px}
+    .message{background:#1e293b;padding:10px 12px;border-radius:16px;max-width:74%;word-wrap:break-word;border:1px solid rgba(148,163,184,.12);align-self:flex-start;position:relative}
+    .message.me{align-self:flex-end;background:#14532d;border-color:rgba(134,239,172,.25)}
+    .msg-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+    .user{font-weight:bold;color:#38bdf8;margin-bottom:6px;font-size:14px}
+    .message.me .user{color:#86efac}
+    .msg-actions{display:flex;gap:5px;opacity:.85}
+    .mini-btn{background:rgba(15,23,42,.8);color:#cbd5e1;border:1px solid rgba(148,163,184,.18);border-radius:8px;padding:4px 7px;font-size:11px}
+    .mini-btn:hover{background:#334155}
+    .text{font-size:15px;line-height:1.45;white-space:pre-wrap}
+    .time{margin-top:7px;font-size:11px;color:#94a3b8;text-align:right}
+    .reply-box{border-left:3px solid #22c55e;background:rgba(15,23,42,.55);padding:7px 9px;border-radius:9px;margin-bottom:8px;color:#cbd5e1;font-size:12px}
+    .reply-name{color:#86efac;font-weight:bold;margin-bottom:3px}
+    .file-card{margin-top:8px;background:rgba(15,23,42,.55);border:1px solid rgba(148,163,184,.18);border-radius:12px;padding:8px}
+    .file-card img{max-width:260px;max-height:220px;border-radius:10px;display:block;margin-bottom:6px}
+    .file-card a{color:#93c5fd;text-decoration:none;font-size:13px;font-weight:bold}
+    .composer-extra{background:#0f172a;border-top:1px solid rgba(148,163,184,.16);padding:0 15px}
+    .reply-preview,.file-preview,.edit-preview{display:none;margin-top:10px;background:#111827;border:1px solid rgba(148,163,184,.16);border-radius:12px;padding:10px;color:#cbd5e1;font-size:13px;justify-content:space-between;gap:10px;align-items:center}
+    .reply-preview.show,.file-preview.show,.edit-preview.show{display:flex}
+    .preview-title{font-weight:bold;color:#86efac;margin-bottom:3px}
+    .close-preview{background:#334155;color:#fff;border-radius:8px;padding:6px 9px}
+    .chat-form{display:flex;gap:10px;padding:15px;border-top:1px solid rgba(148,163,184,.2);background:#0f172a}
+    .chat-input{flex:1;padding:13px;border-radius:12px;background:#1e293b;font-size:15px}
+    .send-btn,.attach-btn{padding:13px 16px;border-radius:12px;color:#fff}
+    .send-btn{background:#22c55e}
+    .attach-btn{background:#334155}
+    .attach-btn:hover{background:#475569}
+    .empty,.error{color:#94a3b8;text-align:center;margin-top:20px}
+    .error{color:#f87171}
+    .mobile-toggle{display:none;background:#1e293b;color:#fff;padding:9px 11px;border-radius:10px;margin-right:8px}
+    @media(max-width:760px){
+      .sidebar{position:fixed;z-index:10;left:-330px;top:0;transition:.25s;box-shadow:20px 0 50px rgba(0,0,0,.45)}
+      .sidebar.open{left:0}
+      .mobile-toggle{display:inline-block}
+      .message{max-width:92%}
+      .chat-header{padding:12px}
+      .chat-title{font-size:18px}
+      .messages{padding:12px}
+      .chat-form{gap:7px;padding:10px}
+      .send-btn,.attach-btn{padding:12px}
+      .file-card img{max-width:210px}
     }
   </style>
 </head>
@@ -467,18 +103,15 @@
     <div class="login-card">
       <h1>Login Forum Chat</h1>
       <p>Masuk menggunakan username dan password yang terdaftar.</p>
-
       <form id="loginForm">
         <div class="form-group">
           <label>Username</label>
           <input type="text" id="loginUsername" placeholder="Contoh: danu" autocomplete="username" />
         </div>
-
         <div class="form-group">
           <label>Password</label>
           <input type="password" id="loginPassword" placeholder="Masukkan password" autocomplete="current-password" />
         </div>
-
         <button class="login-btn" type="submit">Masuk</button>
         <div class="error-text" id="loginError"></div>
       </form>
@@ -507,7 +140,6 @@
           <div class="section-title">Chat Pribadi</div>
           <div id="usersList"></div>
         </div>
-
         <div id="groupsPanel" style="display:none;">
           <div class="section-title">Room Grup</div>
           <div id="groupsList"></div>
@@ -527,15 +159,29 @@
           <span class="chat-title" id="chatTitle">Pilih Chat</span>
           <div class="chat-subtitle" id="chatSubtitle">Pilih user untuk chat pribadi atau pilih grup.</div>
         </div>
-
         <div class="status" id="statusText">Menghubungkan...</div>
       </div>
 
-      <div class="messages" id="messages">
-        <p class="empty">Pilih chat dulu.</p>
+      <div class="messages" id="messages"><p class="empty">Pilih chat dulu.</p></div>
+
+      <div class="composer-extra">
+        <div class="reply-preview" id="replyPreview">
+          <div><div class="preview-title">Reply pesan</div><div id="replyPreviewText"></div></div>
+          <button class="close-preview" onclick="cancelReply()">Batal</button>
+        </div>
+        <div class="edit-preview" id="editPreview">
+          <div><div class="preview-title">Mode edit pesan</div><div id="editPreviewText"></div></div>
+          <button class="close-preview" onclick="cancelEdit()">Batal</button>
+        </div>
+        <div class="file-preview" id="filePreview">
+          <div><div class="preview-title">File dipilih</div><div id="filePreviewText"></div></div>
+          <button class="close-preview" onclick="clearFile()">Hapus</button>
+        </div>
       </div>
 
       <form class="chat-form" id="chatForm">
+        <input type="file" id="fileInput" style="display:none" onchange="handleFilePick()" />
+        <button class="attach-btn" type="button" onclick="document.getElementById('fileInput').click()">📎</button>
         <input class="chat-input" type="text" id="messageInput" placeholder="Tulis pesan..." autocomplete="off" />
         <button class="send-btn" type="submit">Kirim</button>
       </form>
@@ -545,621 +191,369 @@
   <script>
     const SUPABASE_URL = "https://wbzxsvhlhbzusyzbjamp.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_55Jwsh0iRWj-BUAvds_MOQ_NEkwcU0p";
-
+    const BUCKET_NAME = "chat-files";
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const loginPage = document.getElementById("loginPage");
-    const app = document.getElementById("app");
-    const loginForm = document.getElementById("loginForm");
-    const loginUsername = document.getElementById("loginUsername");
-    const loginPassword = document.getElementById("loginPassword");
-    const loginError = document.getElementById("loginError");
+    const loginPage = document.getElementById("loginPage"), app = document.getElementById("app");
+    const loginForm = document.getElementById("loginForm"), loginUsername = document.getElementById("loginUsername"), loginPassword = document.getElementById("loginPassword"), loginError = document.getElementById("loginError");
+    const profileName = document.getElementById("profileName"), profileRole = document.getElementById("profileRole");
+    const usersTabBtn = document.getElementById("usersTabBtn"), groupsTabBtn = document.getElementById("groupsTabBtn"), usersPanel = document.getElementById("usersPanel"), groupsPanel = document.getElementById("groupsPanel");
+    const usersList = document.getElementById("usersList"), groupsList = document.getElementById("groupsList"), addGroupBox = document.getElementById("addGroupBox"), newGroupName = document.getElementById("newGroupName"), searchInput = document.getElementById("searchInput");
+    const chatTitle = document.getElementById("chatTitle"), chatSubtitle = document.getElementById("chatSubtitle"), messagesDiv = document.getElementById("messages"), chatForm = document.getElementById("chatForm"), messageInput = document.getElementById("messageInput"), statusText = document.getElementById("statusText"), sidebar = document.getElementById("sidebar");
+    const fileInput = document.getElementById("fileInput"), filePreview = document.getElementById("filePreview"), filePreviewText = document.getElementById("filePreviewText");
+    const replyPreview = document.getElementById("replyPreview"), replyPreviewText = document.getElementById("replyPreviewText");
+    const editPreview = document.getElementById("editPreview"), editPreviewText = document.getElementById("editPreviewText");
 
-    const profileName = document.getElementById("profileName");
-    const profileRole = document.getElementById("profileRole");
-    const usersTabBtn = document.getElementById("usersTabBtn");
-    const groupsTabBtn = document.getElementById("groupsTabBtn");
-    const usersPanel = document.getElementById("usersPanel");
-    const groupsPanel = document.getElementById("groupsPanel");
-    const usersList = document.getElementById("usersList");
-    const groupsList = document.getElementById("groupsList");
-    const addGroupBox = document.getElementById("addGroupBox");
-    const newGroupName = document.getElementById("newGroupName");
-    const searchInput = document.getElementById("searchInput");
+    let currentUser=null,currentTargetUser=null,currentGroup=null,currentMode="private",activeTab="users";
+    let allUsers=[],visibleUsers=[],allGroups=[],realtimeStarted=false;
+    let unreadPrivate={}, unreadGroups={};
+    let selectedFile=null, replyTo=null, editingMessage=null;
 
-    const chatTitle = document.getElementById("chatTitle");
-    const chatSubtitle = document.getElementById("chatSubtitle");
-    const messagesDiv = document.getElementById("messages");
-    const chatForm = document.getElementById("chatForm");
-    const messageInput = document.getElementById("messageInput");
-    const statusText = document.getElementById("statusText");
-    const sidebar = document.getElementById("sidebar");
+    const savedUser = localStorage.getItem("forum_user_pro");
+    if(savedUser){ currentUser=JSON.parse(savedUser); openApp(); }
 
-    let currentUser = null;
-    let currentTargetUser = null;
-    let currentGroup = null;
-    let currentMode = "private";
-    let activeTab = "users";
+    function escapeHtml(text){const div=document.createElement("div");div.textContent=text||"";return div.innerHTML}
+    function shortText(text,max=80){text=String(text||"");return text.length>max?text.slice(0,max)+"...":text}
+    function formatTime(dateString){const date=new Date(dateString);return date.toLocaleString("id-ID",{hour:"2-digit",minute:"2-digit",day:"2-digit",month:"short"})}
+    function canManageGroups(){const role=String(currentUser?.role||"").toLowerCase();return role==="admin"||role==="leader"}
+    function makeConversationKey(a,b){const ids=[Number(a),Number(b)].sort((x,y)=>x-y);return ids[0]+"_"+ids[1]}
+    function isImage(type,name){return String(type||"").startsWith("image/") || /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(String(name||""))}
 
-    let allUsers = [];
-    let visibleUsers = [];
-    let allGroups = [];
-    let realtimeStarted = false;
-
-    const savedUser = localStorage.getItem("forum_user_v3");
-    if (savedUser) {
-      currentUser = JSON.parse(savedUser);
-      openApp();
-    }
-
-    function escapeHtml(text) {
-      const div = document.createElement("div");
-      div.textContent = text || "";
-      return div.innerHTML;
-    }
-
-    function formatTime(dateString) {
-      const date = new Date(dateString);
-      return date.toLocaleString("id-ID", {
-        hour: "2-digit",
-        minute: "2-digit",
-        day: "2-digit",
-        month: "short"
-      });
-    }
-
-    function canManageGroups() {
-      if (!currentUser) return false;
-      const role = String(currentUser.role || "").toLowerCase();
-      return role === "admin" || role === "leader";
-    }
-
-    function makeConversationKey(userA, userB) {
-      const ids = [Number(userA), Number(userB)].sort(function(a, b) {
-        return a - b;
-      });
-
-      return ids[0] + "_" + ids[1];
-    }
-
-    loginForm.addEventListener("submit", async function(e) {
-      e.preventDefault();
-
-      loginError.textContent = "";
-
-      const username = loginUsername.value.trim();
-      const password = loginPassword.value.trim();
-
-      if (!username || !password) {
-        loginError.textContent = "Username dan password wajib diisi.";
-        return;
-      }
-
-      const { data, error } = await supabaseClient
-        .from("users")
-        .select("id, username, password, display_name, role")
-        .eq("username", username)
-        .eq("password", password)
-        .maybeSingle();
-
-      if (error) {
-        loginError.textContent = "Gagal login: " + error.message;
-        return;
-      }
-
-      if (!data) {
-        loginError.textContent = "Username atau password salah.";
-        return;
-      }
-
-      currentUser = data;
-      localStorage.setItem("forum_user_v3", JSON.stringify(currentUser));
-      openApp();
+    loginForm.addEventListener("submit",async e=>{
+      e.preventDefault(); loginError.textContent="";
+      const username=loginUsername.value.trim(), password=loginPassword.value.trim();
+      if(!username||!password){loginError.textContent="Username dan password wajib diisi.";return}
+      const {data,error}=await supabaseClient.from("users").select("id,username,password,display_name,role").eq("username",username).eq("password",password).maybeSingle();
+      if(error){loginError.textContent="Gagal login: "+error.message;return}
+      if(!data){loginError.textContent="Username atau password salah.";return}
+      currentUser=data; localStorage.setItem("forum_user_pro",JSON.stringify(currentUser)); openApp();
     });
 
-    async function openApp() {
-      loginPage.style.display = "none";
-      app.style.display = "flex";
-
-      profileName.textContent = currentUser.display_name;
-      profileRole.textContent = currentUser.role;
-
-      addGroupBox.classList.toggle("show", canManageGroups());
-
-      await loadUsers();
-      await loadGroups();
-      startRealtime();
-
-      switchTab("users");
+    async function openApp(){
+      loginPage.style.display="none"; app.style.display="flex";
+      profileName.textContent=currentUser.display_name; profileRole.textContent=currentUser.role;
+      addGroupBox.classList.toggle("show",canManageGroups());
+      await loadUsers(); await loadGroups(); startRealtime(); switchTab("users");
     }
 
-    function logout() {
-      localStorage.removeItem("forum_user_v3");
-      currentUser = null;
-      location.reload();
-    }
+    function logout(){localStorage.removeItem("forum_user_pro");location.reload()}
+    function toggleSidebar(){sidebar.classList.toggle("open")}
 
-    function toggleSidebar() {
-      sidebar.classList.toggle("open");
-    }
-
-    function switchTab(tab) {
-      activeTab = tab;
-      searchInput.value = "";
-
-      if (tab === "users") {
-        usersPanel.style.display = "block";
-        groupsPanel.style.display = "none";
-        usersTabBtn.classList.add("active");
-        groupsTabBtn.classList.remove("active");
-        searchInput.placeholder = "Cari nama user...";
-        addGroupBox.classList.remove("show");
-        renderUsers();
-      } else {
-        usersPanel.style.display = "none";
-        groupsPanel.style.display = "block";
-        usersTabBtn.classList.remove("active");
-        groupsTabBtn.classList.add("active");
-        searchInput.placeholder = "Cari nama grup...";
-        addGroupBox.classList.toggle("show", canManageGroups());
-        renderGroups();
+    function switchTab(tab){
+      activeTab=tab; searchInput.value="";
+      if(tab==="users"){
+        usersPanel.style.display="block"; groupsPanel.style.display="none";
+        usersTabBtn.classList.add("active"); groupsTabBtn.classList.remove("active");
+        searchInput.placeholder="Cari nama user..."; addGroupBox.classList.remove("show"); renderUsers();
+      }else{
+        usersPanel.style.display="none"; groupsPanel.style.display="block";
+        usersTabBtn.classList.remove("active"); groupsTabBtn.classList.add("active");
+        searchInput.placeholder="Cari nama grup..."; addGroupBox.classList.toggle("show",canManageGroups()); renderGroups();
       }
     }
 
-    function handleSearch() {
-      if (activeTab === "users") {
-        renderUsers();
-      } else {
-        renderGroups();
-      }
+    function handleSearch(){activeTab==="users"?renderUsers():renderGroups()}
+
+    async function loadUsers(){
+      const {data,error}=await supabaseClient.from("users").select("id,username,display_name,role").neq("id",currentUser.id).order("display_name",{ascending:true});
+      if(error){usersList.innerHTML=`<p class="error">Gagal memuat user: ${escapeHtml(error.message)}</p>`;return}
+      allUsers=data||[]; await loadVisibleUsersByConversation(); renderUsers();
     }
 
-    async function loadUsers() {
-      const { data, error } = await supabaseClient
-        .from("users")
-        .select("id, username, display_name, role")
-        .neq("id", currentUser.id)
-        .order("display_name", { ascending: true });
-
-      if (error) {
-        usersList.innerHTML = `<p class="error">Gagal memuat user: ${escapeHtml(error.message)}</p>`;
-        return;
-      }
-
-      allUsers = data || [];
-      await loadVisibleUsersByConversation();
-      renderUsers();
+    async function loadVisibleUsersByConversation(){
+      const role=String(currentUser.role||"").toLowerCase();
+      if(role==="admin"||role==="leader"){visibleUsers=allUsers;return}
+      const {data,error}=await supabaseClient.from("private_messages").select("sender_id,receiver_id").or("sender_id.eq."+currentUser.id+",receiver_id.eq."+currentUser.id);
+      if(error){visibleUsers=[];return}
+      const userIds=new Set();
+      (data||[]).forEach(msg=>userIds.add(msg.sender_id===currentUser.id?msg.receiver_id:msg.sender_id));
+      visibleUsers=allUsers.filter(user=>userIds.has(user.id));
     }
 
-    async function loadVisibleUsersByConversation() {
-      const role = String(currentUser.role || "").toLowerCase();
-
-      if (role === "admin" || role === "leader") {
-        visibleUsers = allUsers;
-        return;
-      }
-
-      const { data, error } = await supabaseClient
-        .from("private_messages")
-        .select("sender_id, receiver_id")
-        .or("sender_id.eq." + currentUser.id + ",receiver_id.eq." + currentUser.id);
-
-      if (error) {
-        visibleUsers = [];
-        return;
-      }
-
-      const userIds = new Set();
-
-      (data || []).forEach(function(msg) {
-        const otherId = msg.sender_id === currentUser.id ? msg.receiver_id : msg.sender_id;
-        userIds.add(otherId);
-      });
-
-      visibleUsers = allUsers.filter(function(user) {
-        return userIds.has(user.id);
-      });
-    }
-
-    function renderUsers() {
-      const keyword = searchInput.value.trim().toLowerCase();
-
-      const filtered = visibleUsers.filter(function(user) {
-        const text = (user.display_name + " " + user.username + " " + user.role).toLowerCase();
-        return text.includes(keyword);
-      });
-
-      usersList.innerHTML = "";
-
-      if (filtered.length === 0) {
-        if (keyword) {
-          usersList.innerHTML = `<p class="empty">User tidak ditemukan.</p>`;
-        } else {
-          usersList.innerHTML = `<p class="empty">Belum ada percakapan pribadi.</p>`;
-        }
-        return;
-      }
-
-      filtered.forEach(function(user) {
-        const div = document.createElement("div");
-        div.className = "user-item";
-
-        if (currentTargetUser && currentTargetUser.id === user.id && currentMode === "private") {
-          div.classList.add("active");
-        }
-
-        div.onclick = function() {
-          selectUser(user.id);
-        };
-
-        div.innerHTML = `
-          <div class="item-name">${escapeHtml(user.display_name)}</div>
-          <div class="item-meta">@${escapeHtml(user.username)} • ${escapeHtml(user.role)}</div>
-        `;
-
+    function renderUsers(){
+      const keyword=searchInput.value.trim().toLowerCase();
+      const filtered=visibleUsers.filter(u=>(u.display_name+" "+u.username+" "+u.role).toLowerCase().includes(keyword));
+      usersList.innerHTML="";
+      if(!filtered.length){usersList.innerHTML=`<p class="empty">${keyword?"User tidak ditemukan.":"Belum ada percakapan pribadi."}</p>`;return}
+      filtered.forEach(user=>{
+        const div=document.createElement("div"); div.className="user-item";
+        if(currentTargetUser&&currentTargetUser.id===user.id&&currentMode==="private") div.classList.add("active");
+        div.onclick=()=>selectUser(user.id);
+        const count=unreadPrivate[user.id]||0;
+        div.innerHTML=`<div class="item-name">${escapeHtml(user.display_name)}</div><div class="item-meta">@${escapeHtml(user.username)} • ${escapeHtml(user.role)}</div><div class="badge ${count>0?"show":""}">${count}</div>`;
         usersList.appendChild(div);
       });
     }
 
-    async function loadGroups() {
-      const { data, error } = await supabaseClient
-        .from("groups")
-        .select("*")
-        .order("created_at", { ascending: true });
-
-      if (error) {
-        groupsList.innerHTML = `<p class="error">Gagal memuat grup: ${escapeHtml(error.message)}</p>`;
-        return;
-      }
-
-      allGroups = data || [];
-      renderGroups();
+    async function loadGroups(){
+      const {data,error}=await supabaseClient.from("groups").select("*").order("created_at",{ascending:true});
+      if(error){groupsList.innerHTML=`<p class="error">Gagal memuat grup: ${escapeHtml(error.message)}</p>`;return}
+      allGroups=data||[]; renderGroups();
     }
 
-    function renderGroups() {
-      const keyword = searchInput.value.trim().toLowerCase();
-
-      const filtered = allGroups.filter(function(group) {
-        return String(group.name || "").toLowerCase().includes(keyword);
-      });
-
-      groupsList.innerHTML = "";
-
-      if (filtered.length === 0) {
-        groupsList.innerHTML = `<p class="empty">Grup tidak ditemukan.</p>`;
-        return;
-      }
-
-      filtered.forEach(function(group) {
-        const div = document.createElement("div");
-        div.className = "group-item";
-
-        if (currentGroup && currentGroup.id === group.id && currentMode === "group") {
-          div.classList.add("active");
-        }
-
-        div.onclick = function() {
-          selectGroup(group.id);
-        };
-
-        div.innerHTML = `
-          <div class="item-name"># ${escapeHtml(group.name)}</div>
-          <div class="item-meta">Room chat grup</div>
-        `;
-
+    function renderGroups(){
+      const keyword=searchInput.value.trim().toLowerCase();
+      const filtered=allGroups.filter(g=>String(g.name||"").toLowerCase().includes(keyword));
+      groupsList.innerHTML="";
+      if(!filtered.length){groupsList.innerHTML=`<p class="empty">Grup tidak ditemukan.</p>`;return}
+      filtered.forEach(group=>{
+        const div=document.createElement("div"); div.className="group-item";
+        if(currentGroup&&currentGroup.id===group.id&&currentMode==="group") div.classList.add("active");
+        div.onclick=()=>selectGroup(group.id);
+        const count=unreadGroups[group.id]||0;
+        div.innerHTML=`<div class="item-name"># ${escapeHtml(group.name)}</div><div class="item-meta">Room chat grup</div><div class="badge ${count>0?"show":""}">${count}</div>`;
         groupsList.appendChild(div);
       });
     }
 
-    async function createGroup() {
-      if (!canManageGroups()) {
-        alert("Hanya Admin atau Leader yang bisa menambahkan grup.");
-        return;
-      }
-
-      const name = newGroupName.value.trim();
-
-      if (!name) {
-        alert("Nama grup tidak boleh kosong.");
-        return;
-      }
-
-      const { data, error } = await supabaseClient
-        .from("groups")
-        .insert([
-          {
-            name: name,
-            created_by: currentUser.id
-          }
-        ])
-        .select()
-        .single();
-
-      if (error) {
-        alert("Gagal menambah grup: " + error.message);
-        return;
-      }
-
-      newGroupName.value = "";
-      allGroups.push(data);
-      renderGroups();
-      selectGroup(data.id);
+    async function createGroup(){
+      if(!canManageGroups()){alert("Hanya Admin atau Leader yang bisa menambahkan grup.");return}
+      const name=newGroupName.value.trim(); if(!name){alert("Nama grup tidak boleh kosong.");return}
+      const {data,error}=await supabaseClient.from("groups").insert([{name,created_by:currentUser.id}]).select().single();
+      if(error){alert("Gagal menambah grup: "+error.message);return}
+      newGroupName.value=""; allGroups.push(data); renderGroups(); selectGroup(data.id);
     }
 
-    async function selectUser(userId) {
-      currentTargetUser = allUsers.find(function(user) {
-        return user.id === userId;
-      });
-
-      if (!currentTargetUser) return;
-
-      currentMode = "private";
-      currentGroup = null;
-
-      chatTitle.textContent = currentTargetUser.display_name;
-      chatSubtitle.textContent = "Chat pribadi dengan @" + currentTargetUser.username;
-
-      renderUsers();
-      sidebar.classList.remove("open");
-
-      await loadPrivateMessages();
+    async function selectUser(userId){
+      currentTargetUser=allUsers.find(u=>u.id===userId); if(!currentTargetUser)return;
+      currentMode="private"; currentGroup=null; unreadPrivate[userId]=0; cancelReply(); cancelEdit(); clearFile(false);
+      chatTitle.textContent=currentTargetUser.display_name; chatSubtitle.textContent="Chat pribadi dengan @"+currentTargetUser.username;
+      renderUsers(); sidebar.classList.remove("open"); await loadPrivateMessages();
     }
 
-    async function selectGroup(groupId) {
-      currentGroup = allGroups.find(function(group) {
-        return group.id === groupId;
-      });
-
-      if (!currentGroup) return;
-
-      currentMode = "group";
-      currentTargetUser = null;
-
-      chatTitle.textContent = "# " + currentGroup.name;
-      chatSubtitle.textContent = "Room chat grup: " + currentGroup.name;
-
-      renderGroups();
-      sidebar.classList.remove("open");
-
-      await loadGroupMessages();
+    async function selectGroup(groupId){
+      currentGroup=allGroups.find(g=>g.id===groupId); if(!currentGroup)return;
+      currentMode="group"; currentTargetUser=null; unreadGroups[groupId]=0; cancelReply(); cancelEdit(); clearFile(false);
+      chatTitle.textContent="# "+currentGroup.name; chatSubtitle.textContent="Room chat grup: "+currentGroup.name;
+      renderGroups(); sidebar.classList.remove("open"); await loadGroupMessages();
     }
 
-    async function loadPrivateMessages() {
-      if (!currentTargetUser) {
-        messagesDiv.innerHTML = `<p class="empty">Pilih user dulu.</p>`;
-        return;
-      }
+    async function loadPrivateMessages(){
+      if(!currentTargetUser){messagesDiv.innerHTML=`<p class="empty">Pilih user dulu.</p>`;return}
+      const key=makeConversationKey(currentUser.id,currentTargetUser.id);
+      const {data,error}=await supabaseClient.from("private_messages").select("*").eq("conversation_key",key).order("created_at",{ascending:true}).limit(250);
+      renderMessageList(data,error,"Belum ada pesan pribadi.");
+    }
 
-      const conversationKey = makeConversationKey(currentUser.id, currentTargetUser.id);
+    async function loadGroupMessages(){
+      if(!currentGroup){messagesDiv.innerHTML=`<p class="empty">Pilih grup dulu.</p>`;return}
+      const {data,error}=await supabaseClient.from("messages").select("*").eq("group_id",currentGroup.id).order("created_at",{ascending:true}).limit(250);
+      renderMessageList(data,error,"Belum ada pesan di grup ini.");
+    }
 
-      const { data, error } = await supabaseClient
-        .from("private_messages")
-        .select("*")
-        .eq("conversation_key", conversationKey)
-        .order("created_at", { ascending: true })
-        .limit(200);
-
-      if (error) {
-        messagesDiv.innerHTML = `<p class="error">Gagal memuat pesan: ${escapeHtml(error.message)}</p>`;
-        return;
-      }
-
-      messagesDiv.innerHTML = "";
-
-      if (!data || data.length === 0) {
-        messagesDiv.innerHTML = `<p class="empty">Belum ada pesan pribadi.</p>`;
-        return;
-      }
-
+    function renderMessageList(data,error,emptyText){
+      if(error){messagesDiv.innerHTML=`<p class="error">Gagal memuat pesan: ${escapeHtml(error.message)}</p>`;return}
+      messagesDiv.innerHTML="";
+      if(!data||!data.length){messagesDiv.innerHTML=`<p class="empty">${emptyText}</p>`;return}
       data.forEach(renderMessage);
+      messagesDiv.scrollTop=messagesDiv.scrollHeight;
     }
 
-    async function loadGroupMessages() {
-      if (!currentGroup) {
-        messagesDiv.innerHTML = `<p class="empty">Pilih grup dulu.</p>`;
-        return;
-      }
+    function renderMessage(data){
+      const existing=document.querySelector(`[data-msg-id="${currentMode}-${data.id}"]`);
+      if(existing) existing.remove();
 
-      const { data, error } = await supabaseClient
-        .from("messages")
-        .select("*")
-        .eq("group_id", currentGroup.id)
-        .order("created_at", { ascending: true })
-        .limit(200);
+      const div=document.createElement("div"); div.className="message"; div.dataset.msgId=currentMode+"-"+data.id;
+      if(currentUser&&data.username===currentUser.username) div.classList.add("me");
 
-      if (error) {
-        messagesDiv.innerHTML = `<p class="error">Gagal memuat pesan: ${escapeHtml(error.message)}</p>`;
-        return;
-      }
+      const deleted=data.is_deleted===true;
+      const canEdit=currentUser&&data.username===currentUser.username&&!deleted;
+      const replyHtml=data.reply_to_text?`<div class="reply-box"><div class="reply-name">${escapeHtml(data.reply_to_display_name||"Pesan")}</div><div>${escapeHtml(shortText(data.reply_to_text,90))}</div></div>`:"";
+      const fileHtml=(!deleted&&data.file_url)?renderFileHtml(data):"";
+      const edited=data.edited_at&&!deleted?" • diedit":"";
 
-      messagesDiv.innerHTML = "";
-
-      if (!data || data.length === 0) {
-        messagesDiv.innerHTML = `<p class="empty">Belum ada pesan di grup ini.</p>`;
-        return;
-      }
-
-      data.forEach(renderMessage);
-    }
-
-    function renderMessage(data) {
-      const div = document.createElement("div");
-      div.className = "message";
-
-      if (currentUser && data.username === currentUser.username) {
-        div.classList.add("me");
-      }
-
-      div.innerHTML = `
-        <div class="user">${escapeHtml(data.display_name || data.username)}</div>
-        <div class="text">${escapeHtml(data.message)}</div>
-        <div class="time">${formatTime(data.created_at)}</div>
+      div.innerHTML=`
+        <div class="msg-top">
+          <div class="user">${escapeHtml(data.display_name||data.username)}</div>
+          <div class="msg-actions">
+            ${!deleted?`<button class="mini-btn" onclick='setReply(${JSON.stringify(packMsg(data))})'>Reply</button>`:""}
+            ${canEdit?`<button class="mini-btn" onclick='setEdit(${JSON.stringify(packMsg(data))})'>Edit</button><button class="mini-btn" onclick='deleteMessage(${JSON.stringify(packMsg(data))})'>Hapus</button>`:""}
+          </div>
+        </div>
+        ${replyHtml}
+        <div class="text">${deleted?"<i>Pesan telah dihapus</i>":escapeHtml(data.message||"")}</div>
+        ${fileHtml}
+        <div class="time">${formatTime(data.created_at)}${edited}</div>
       `;
-
       messagesDiv.appendChild(div);
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      messagesDiv.scrollTop=messagesDiv.scrollHeight;
     }
 
-    chatForm.addEventListener("submit", async function(e) {
-      e.preventDefault();
+    function packMsg(data){
+      return {
+        id:data.id,
+        mode:currentMode,
+        message:data.message||"",
+        display_name:data.display_name||data.username||"",
+        file_url:data.file_url||"",
+        file_name:data.file_name||"",
+        file_type:data.file_type||""
+      };
+    }
 
-      if (!currentUser) {
-        alert("Silakan login dulu.");
+    function renderFileHtml(data){
+      const url=escapeHtml(data.file_url), name=escapeHtml(data.file_name||"File");
+      if(isImage(data.file_type,data.file_name)){
+        return `<div class="file-card"><img src="${url}" alt="${name}"><a href="${url}" target="_blank">Buka gambar</a></div>`;
+      }
+      return `<div class="file-card">📎 <a href="${url}" target="_blank">${name}</a></div>`;
+    }
+
+    function setReply(msg){
+      replyTo=msg; cancelEdit();
+      replyPreviewText.textContent=(msg.display_name||"User")+": "+shortText(msg.message || msg.file_name || "File",90);
+      replyPreview.classList.add("show");
+      messageInput.focus();
+    }
+
+    function cancelReply(){replyTo=null; replyPreview.classList.remove("show"); replyPreviewText.textContent=""}
+
+    function setEdit(msg){
+      if(!msg.message && msg.file_url){alert("Pesan file tanpa teks tidak bisa diedit teksnya.");return}
+      editingMessage=msg; cancelReply();
+      editPreviewText.textContent="Mengedit: "+shortText(msg.message,90);
+      editPreview.classList.add("show");
+      messageInput.value=msg.message||"";
+      messageInput.focus();
+    }
+
+    function cancelEdit(){editingMessage=null; editPreview.classList.remove("show"); editPreviewText.textContent=""; messageInput.value=""}
+
+    function handleFilePick(){
+      selectedFile=fileInput.files[0]||null;
+      if(selectedFile){
+        filePreviewText.textContent=selectedFile.name+" ("+Math.ceil(selectedFile.size/1024)+" KB)";
+        filePreview.classList.add("show");
+      }else clearFile(false);
+    }
+
+    function clearFile(clearInput=true){
+      selectedFile=null; filePreview.classList.remove("show"); filePreviewText.textContent="";
+      if(clearInput) fileInput.value="";
+    }
+
+    async function uploadFile(){
+      if(!selectedFile)return {url:null,name:null,type:null};
+      const safeName=selectedFile.name.replace(/[^a-zA-Z0-9._-]/g,"_");
+      const path=`${currentUser.id}/${Date.now()}_${safeName}`;
+      const {error}=await supabaseClient.storage.from(BUCKET_NAME).upload(path,selectedFile,{cacheControl:"3600",upsert:false});
+      if(error) throw error;
+      const {data}=supabaseClient.storage.from(BUCKET_NAME).getPublicUrl(path);
+      return {url:data.publicUrl,name:selectedFile.name,type:selectedFile.type||"application/octet-stream"};
+    }
+
+    chatForm.addEventListener("submit",async e=>{
+      e.preventDefault();
+      if(!currentUser){alert("Silakan login dulu.");return}
+
+      const message=messageInput.value.trim();
+
+      if(editingMessage){
+        if(!message){alert("Pesan tidak boleh kosong.");return}
+        await updateMessageText(message);
         return;
       }
 
-      const message = messageInput.value.trim();
-      if (!message) return;
+      if(!message&&!selectedFile)return;
 
-      if (currentMode === "group") {
-        await sendGroupMessage(message);
-      } else {
-        await sendPrivateMessage(message);
-      }
+      if(currentMode==="group") await sendGroupMessage(message);
+      else await sendPrivateMessage(message);
     });
 
-    async function sendGroupMessage(message) {
-      if (!currentGroup) {
-        alert("Pilih grup dulu.");
-        return;
-      }
-
-      messageInput.value = "";
-
-      const { error } = await supabaseClient
-        .from("messages")
-        .insert([
-          {
-            group_id: currentGroup.id,
-            user_id: currentUser.id,
-            username: currentUser.username,
-            display_name: currentUser.display_name,
-            message: message
-          }
-        ]);
-
-      if (error) {
-        alert("Gagal mengirim pesan grup: " + error.message);
-      }
+    async function updateMessageText(message){
+      const table=editingMessage.mode==="group"?"messages":"private_messages";
+      const {error}=await supabaseClient.from(table).update({message,edited_at:new Date().toISOString()}).eq("id",editingMessage.id);
+      if(error){alert("Gagal edit pesan: "+error.message);return}
+      cancelEdit();
+      if(currentMode==="group") await loadGroupMessages(); else await loadPrivateMessages();
     }
 
-    async function sendPrivateMessage(message) {
-      if (!currentTargetUser) {
-        alert("Pilih user dulu.");
-        return;
-      }
-
-      messageInput.value = "";
-
-      const conversationKey = makeConversationKey(currentUser.id, currentTargetUser.id);
-
-      const { error } = await supabaseClient
-        .from("private_messages")
-        .insert([
-          {
-            conversation_key: conversationKey,
-            sender_id: currentUser.id,
-            receiver_id: currentTargetUser.id,
-            username: currentUser.username,
-            display_name: currentUser.display_name,
-            message: message
-          }
-        ]);
-
-      if (error) {
-        alert("Gagal mengirim pesan pribadi: " + error.message);
-      } else {
-        if (!visibleUsers.some(function(user) { return user.id === currentTargetUser.id; })) {
-          visibleUsers.push(currentTargetUser);
-          renderUsers();
-        }
-      }
+    async function deleteMessage(msg){
+      if(!confirm("Hapus pesan ini?"))return;
+      const table=msg.mode==="group"?"messages":"private_messages";
+      const {error}=await supabaseClient.from(table).update({is_deleted:true,message:"",file_url:null,file_name:null,file_type:null,edited_at:new Date().toISOString()}).eq("id",msg.id);
+      if(error){alert("Gagal hapus pesan: "+error.message);return}
+      if(currentMode==="group") await loadGroupMessages(); else await loadPrivateMessages();
     }
 
-    function startRealtime() {
-      if (realtimeStarted) return;
-      realtimeStarted = true;
+    function replyPayload(){
+      if(!replyTo)return {};
+      return {
+        reply_to_id: replyTo.id,
+        reply_to_text: replyTo.message || replyTo.file_name || "File",
+        reply_to_display_name: replyTo.display_name || "User"
+      };
+    }
 
-      supabaseClient
-        .channel("forum-realtime-v3")
-        .on(
-          "postgres_changes",
-          {
-            event: "INSERT",
-            schema: "public",
-            table: "messages"
-          },
-          function(payload) {
-            if (currentMode !== "group") return;
-            if (!currentGroup) return;
-            if (payload.new.group_id !== currentGroup.id) return;
+    async function sendGroupMessage(message){
+      if(!currentGroup){alert("Pilih grup dulu.");return}
+      try{
+        const file=await uploadFile();
+        messageInput.value="";
+        const {error}=await supabaseClient.from("messages").insert([{
+          group_id:currentGroup.id,user_id:currentUser.id,username:currentUser.username,display_name:currentUser.display_name,message,
+          file_url:file.url,file_name:file.name,file_type:file.type,...replyPayload()
+        }]);
+        if(error)throw error;
+        cancelReply(); clearFile();
+      }catch(err){alert("Gagal mengirim pesan grup: "+err.message)}
+    }
 
-            const emptyText = messagesDiv.querySelector(".empty");
-            if (emptyText) messagesDiv.innerHTML = "";
+    async function sendPrivateMessage(message){
+      if(!currentTargetUser){alert("Pilih user dulu.");return}
+      try{
+        const file=await uploadFile();
+        const key=makeConversationKey(currentUser.id,currentTargetUser.id);
+        messageInput.value="";
+        const {error}=await supabaseClient.from("private_messages").insert([{
+          conversation_key:key,sender_id:currentUser.id,receiver_id:currentTargetUser.id,username:currentUser.username,display_name:currentUser.display_name,message,
+          file_url:file.url,file_name:file.name,file_type:file.type,...replyPayload()
+        }]);
+        if(error)throw error;
+        cancelReply(); clearFile();
+        if(!visibleUsers.some(u=>u.id===currentTargetUser.id)){visibleUsers.push(currentTargetUser);renderUsers()}
+      }catch(err){alert("Gagal mengirim pesan pribadi: "+err.message)}
+    }
 
-            renderMessage(payload.new);
-          }
-        )
-        .on(
-          "postgres_changes",
-          {
-            event: "INSERT",
-            schema: "public",
-            table: "private_messages"
-          },
-          async function(payload) {
-            const msg = payload.new;
-
-            if (msg.sender_id !== currentUser.id && msg.receiver_id !== currentUser.id) return;
-
-            const otherId = msg.sender_id === currentUser.id ? msg.receiver_id : msg.sender_id;
-            const otherUser = allUsers.find(function(user) {
-              return user.id === otherId;
-            });
-
-            if (otherUser && !visibleUsers.some(function(user) { return user.id === otherUser.id; })) {
-              visibleUsers.push(otherUser);
-              renderUsers();
-            }
-
-            if (currentMode !== "private") return;
-            if (!currentTargetUser) return;
-
-            const currentKey = makeConversationKey(currentUser.id, currentTargetUser.id);
-            if (msg.conversation_key !== currentKey) return;
-
-            const emptyText = messagesDiv.querySelector(".empty");
-            if (emptyText) messagesDiv.innerHTML = "";
-
+    function startRealtime(){
+      if(realtimeStarted)return; realtimeStarted=true;
+      supabaseClient.channel("forum-pro-realtime")
+        .on("postgres_changes",{event:"INSERT",schema:"public",table:"messages"},payload=>{
+          const msg=payload.new;
+          if(currentMode==="group"&&currentGroup&&msg.group_id===currentGroup.id){
+            const empty=messagesDiv.querySelector(".empty"); if(empty)messagesDiv.innerHTML="";
             renderMessage(msg);
+          }else if(msg.username!==currentUser.username){
+            unreadGroups[msg.group_id]=(unreadGroups[msg.group_id]||0)+1; renderGroups();
           }
-        )
-        .on(
-          "postgres_changes",
-          {
-            event: "INSERT",
-            schema: "public",
-            table: "groups"
-          },
-          function(payload) {
-            const exists = allGroups.some(function(group) {
-              return group.id === payload.new.id;
-            });
-
-            if (!exists) {
-              allGroups.push(payload.new);
-              renderGroups();
-            }
+        })
+        .on("postgres_changes",{event:"UPDATE",schema:"public",table:"messages"},payload=>{
+          if(currentMode==="group"&&currentGroup&&payload.new.group_id===currentGroup.id) loadGroupMessages();
+        })
+        .on("postgres_changes",{event:"INSERT",schema:"public",table:"private_messages"},payload=>{
+          const msg=payload.new;
+          if(msg.sender_id!==currentUser.id&&msg.receiver_id!==currentUser.id)return;
+          const otherId=msg.sender_id===currentUser.id?msg.receiver_id:msg.sender_id;
+          const otherUser=allUsers.find(u=>u.id===otherId);
+          if(otherUser&&!visibleUsers.some(u=>u.id===otherUser.id)){visibleUsers.push(otherUser)}
+          if(currentMode==="private"&&currentTargetUser&&msg.conversation_key===makeConversationKey(currentUser.id,currentTargetUser.id)){
+            const empty=messagesDiv.querySelector(".empty"); if(empty)messagesDiv.innerHTML="";
+            renderMessage(msg);
+          }else if(msg.sender_id!==currentUser.id){
+            unreadPrivate[otherId]=(unreadPrivate[otherId]||0)+1;
           }
-        )
-        .subscribe(function(status) {
-          if (status === "SUBSCRIBED") {
-            statusText.textContent = "Online";
-            statusText.classList.add("online");
-          } else {
-            statusText.textContent = "Menghubungkan...";
-            statusText.classList.remove("online");
-          }
+          renderUsers();
+        })
+        .on("postgres_changes",{event:"UPDATE",schema:"public",table:"private_messages"},payload=>{
+          const msg=payload.new;
+          if(currentMode==="private"&&currentTargetUser&&msg.conversation_key===makeConversationKey(currentUser.id,currentTargetUser.id)) loadPrivateMessages();
+        })
+        .on("postgres_changes",{event:"INSERT",schema:"public",table:"groups"},payload=>{
+          if(!allGroups.some(g=>g.id===payload.new.id)){allGroups.push(payload.new);renderGroups()}
+        })
+        .subscribe(status=>{
+          if(status==="SUBSCRIBED"){statusText.textContent="Online";statusText.classList.add("online")}
+          else{statusText.textContent="Menghubungkan...";statusText.classList.remove("online")}
         });
     }
   </script>
