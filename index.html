@@ -722,7 +722,172 @@
         width:220px;height:220px;right:-8%;bottom:4%;
       }
     }
+  
+  <style id="login-background-stronger-motion">
+    .login-page{
+      position:relative;
+      overflow:hidden;
+      isolation:isolate;
+    }
+
+    .login-ambient,
+    .login-fireline{
+      position:absolute;
+      pointer-events:none;
+      z-index:0;
+    }
+
+    .login-ambient{
+      border-radius:50%;
+      filter:blur(70px);
+      opacity:.85;
+      mix-blend-mode:screen;
+      will-change:transform, opacity;
+    }
+
+    .login-ambient.ambient-1{
+      width:38vw;
+      height:38vw;
+      min-width:280px;
+      min-height:280px;
+      left:-10vw;
+      top:8vh;
+      background:radial-gradient(circle, rgba(56,189,248,.40), rgba(56,189,248,.06) 58%, transparent 72%);
+      animation:ambientFloatA 12s ease-in-out infinite alternate;
+    }
+
+    .login-ambient.ambient-2{
+      width:30vw;
+      height:30vw;
+      min-width:240px;
+      min-height:240px;
+      right:-8vw;
+      top:4vh;
+      background:radial-gradient(circle, rgba(34,197,94,.28), rgba(34,197,94,.05) 58%, transparent 72%);
+      animation:ambientFloatB 14s ease-in-out infinite alternate;
+    }
+
+    .login-ambient.ambient-3{
+      width:34vw;
+      height:34vw;
+      min-width:260px;
+      min-height:260px;
+      left:8vw;
+      bottom:-12vw;
+      background:radial-gradient(circle, rgba(249,115,22,.22), rgba(239,68,68,.06) 56%, transparent 72%);
+      animation:ambientFloatC 11s ease-in-out infinite alternate;
+    }
+
+    .login-ambient.ambient-4{
+      width:32vw;
+      height:32vw;
+      min-width:220px;
+      min-height:220px;
+      right:6vw;
+      bottom:-10vw;
+      background:radial-gradient(circle, rgba(168,85,247,.20), rgba(59,130,246,.05) 54%, transparent 70%);
+      animation:ambientFloatD 15s ease-in-out infinite alternate;
+    }
+
+    .login-fireline{
+      left:-10%;
+      width:120%;
+      height:28vh;
+      bottom:-12vh;
+      filter:blur(48px);
+      opacity:.60;
+      mix-blend-mode:screen;
+      will-change:transform, opacity;
+    }
+
+    .login-fireline.fireline-1{
+      background:
+        radial-gradient(ellipse at 10% 100%, rgba(249,115,22,.28), transparent 32%),
+        radial-gradient(ellipse at 25% 100%, rgba(239,68,68,.18), transparent 30%),
+        radial-gradient(ellipse at 42% 100%, rgba(251,191,36,.18), transparent 32%),
+        radial-gradient(ellipse at 62% 100%, rgba(249,115,22,.20), transparent 32%),
+        radial-gradient(ellipse at 78% 100%, rgba(244,63,94,.14), transparent 28%),
+        radial-gradient(ellipse at 92% 100%, rgba(56,189,248,.12), transparent 30%);
+      animation:fireWaveA 8s ease-in-out infinite alternate;
+    }
+
+    .login-fireline.fireline-2{
+      background:
+        radial-gradient(ellipse at 18% 100%, rgba(255,255,255,.08), transparent 18%),
+        radial-gradient(ellipse at 38% 100%, rgba(251,191,36,.10), transparent 18%),
+        radial-gradient(ellipse at 56% 100%, rgba(249,115,22,.10), transparent 20%),
+        radial-gradient(ellipse at 74% 100%, rgba(239,68,68,.10), transparent 18%);
+      filter:blur(72px);
+      opacity:.42;
+      animation:fireWaveB 6.5s ease-in-out infinite alternate;
+    }
+
+    .login-page > *:not(.login-ambient):not(.login-fireline):not(.login-subglow){
+      position:relative;
+      z-index:2;
+    }
+
+    @keyframes ambientFloatA{
+      0%{transform:translate3d(0,0,0) scale(1);}
+      35%{transform:translate3d(6vw,-2vh,0) scale(1.08);}
+      65%{transform:translate3d(2vw,3vh,0) scale(1.02);}
+      100%{transform:translate3d(10vw,-1vh,0) scale(1.12);}
+    }
+
+    @keyframes ambientFloatB{
+      0%{transform:translate3d(0,0,0) scale(1);}
+      40%{transform:translate3d(-4vw,3vh,0) scale(1.10);}
+      70%{transform:translate3d(-8vw,-1vh,0) scale(1.03);}
+      100%{transform:translate3d(-10vw,4vh,0) scale(1.12);}
+    }
+
+    @keyframes ambientFloatC{
+      0%{transform:translate3d(0,0,0) scale(1);}
+      30%{transform:translate3d(3vw,-4vh,0) scale(1.10);}
+      65%{transform:translate3d(-2vw,-2vh,0) scale(1.03);}
+      100%{transform:translate3d(7vw,-6vh,0) scale(1.14);}
+    }
+
+    @keyframes ambientFloatD{
+      0%{transform:translate3d(0,0,0) scale(1);}
+      35%{transform:translate3d(-5vw,-4vh,0) scale(1.09);}
+      70%{transform:translate3d(2vw,-2vh,0) scale(1.03);}
+      100%{transform:translate3d(-8vw,-6vh,0) scale(1.12);}
+    }
+
+    @keyframes fireWaveA{
+      0%{transform:translateY(0) scaleX(1);}
+      50%{transform:translateY(-3.5vh) scaleX(1.03);}
+      100%{transform:translateY(-1vh) scaleX(1.06);}
+    }
+
+    @keyframes fireWaveB{
+      0%{transform:translateY(0) scaleX(1);}
+      50%{transform:translateY(-5vh) scaleX(1.02);}
+      100%{transform:translateY(-2vh) scaleX(1.05);}
+    }
+
+    @media (max-width:760px){
+      .login-ambient.ambient-1,
+      .login-ambient.ambient-2,
+      .login-ambient.ambient-3,
+      .login-ambient.ambient-4{
+        filter:blur(50px);
+      }
+
+      .login-ambient.ambient-1{width:58vw;height:58vw;left:-20vw;top:10vh;}
+      .login-ambient.ambient-2{width:52vw;height:52vw;right:-18vw;top:8vh;}
+      .login-ambient.ambient-3{width:56vw;height:56vw;left:-6vw;bottom:-18vw;}
+      .login-ambient.ambient-4{width:54vw;height:54vw;right:-10vw;bottom:-16vw;}
+
+      .login-fireline{
+        height:24vh;
+        bottom:-10vh;
+      }
+    }
   </style>
+
+</style>
 
 </style>
 
@@ -739,7 +904,15 @@
   </div>
 
   <div class="login-page" id="loginPage">
+
     <div class="login-subglow"></div>
+    <div class="login-ambient ambient-1"></div>
+    <div class="login-ambient ambient-2"></div>
+    <div class="login-ambient ambient-3"></div>
+    <div class="login-ambient ambient-4"></div>
+    <div class="login-fireline fireline-1"></div>
+    <div class="login-fireline fireline-2"></div>
+
     <div class="login-card">
       <h1>Login Forum Chat</h1>
       <p>Masuk menggunakan username dan password yang terdaftar.</p>
