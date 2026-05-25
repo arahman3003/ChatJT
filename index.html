@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Forum Chat Login</title>
+  <title>Forum Chat Grup</title>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -16,26 +16,47 @@
     body {
       margin: 0;
       min-height: 100vh;
-      background: linear-gradient(135deg, #020617, #0f172a);
+      background: #020617;
       color: white;
     }
 
-    .page {
+    button {
+      border: none;
+      cursor: pointer;
+      transition: 0.2s;
+      font-weight: bold;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    input {
+      border: none;
+      outline: none;
+      color: white;
+    }
+
+    .login-page {
       min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
       padding: 18px;
+      background:
+        radial-gradient(circle at top left, rgba(34, 197, 94, 0.15), transparent 30%),
+        radial-gradient(circle at bottom right, rgba(56, 189, 248, 0.13), transparent 30%),
+        #020617;
     }
 
     .login-card {
       width: 100%;
-      max-width: 390px;
+      max-width: 410px;
       background: rgba(15, 23, 42, 0.97);
       border: 1px solid rgba(148, 163, 184, 0.25);
       border-radius: 22px;
       padding: 24px;
-      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.55);
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
     }
 
     .login-card h1 {
@@ -61,40 +82,31 @@
       font-weight: bold;
     }
 
-    input {
+    .login-card input {
       width: 100%;
       padding: 13px;
-      border: none;
       border-radius: 12px;
-      outline: none;
       background: #1e293b;
-      color: white;
       font-size: 15px;
     }
 
-    input::placeholder {
+    .login-card input::placeholder,
+    .chat-input::placeholder,
+    .group-input::placeholder {
       color: #94a3b8;
-    }
-
-    button {
-      border: none;
-      border-radius: 12px;
-      padding: 13px 17px;
-      background: #22c55e;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-
-    button:hover {
-      background: #16a34a;
-      transform: translateY(-1px);
     }
 
     .login-btn {
       width: 100%;
       margin-top: 5px;
+      padding: 13px;
+      border-radius: 12px;
+      background: #22c55e;
+      color: white;
+    }
+
+    .login-btn:hover {
+      background: #16a34a;
     }
 
     .error-text {
@@ -104,54 +116,182 @@
       min-height: 18px;
     }
 
-    .chat-page {
-      min-height: 100vh;
+    .app {
       display: none;
-      justify-content: center;
-      align-items: center;
-      padding: 18px;
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+      background: #020617;
     }
 
-    .chat-container {
-      width: 100%;
-      max-width: 900px;
-      height: 92vh;
-      background: rgba(15, 23, 42, 0.96);
-      border: 1px solid rgba(148, 163, 184, 0.25);
-      border-radius: 20px;
+    .sidebar {
+      width: 310px;
+      min-width: 310px;
+      height: 100vh;
+      background: #0f172a;
+      border-right: 1px solid rgba(148, 163, 184, 0.2);
       display: flex;
       flex-direction: column;
-      overflow: hidden;
-      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.55);
+    }
+
+    .profile {
+      padding: 18px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+      background: rgba(2, 6, 23, 0.65);
+    }
+
+    .profile-name {
+      font-size: 17px;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+
+    .profile-role {
+      display: inline-block;
+      font-size: 12px;
+      padding: 5px 9px;
+      border-radius: 999px;
+      color: #86efac;
+      border: 1px solid rgba(34, 197, 94, 0.35);
+      background: rgba(34, 197, 94, 0.12);
+    }
+
+    .logout-btn {
+      margin-top: 13px;
+      background: #334155;
+      color: white;
+      padding: 9px 12px;
+      border-radius: 10px;
+      width: 100%;
+    }
+
+    .logout-btn:hover {
+      background: #475569;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      padding: 14px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 10px;
+      border-radius: 12px;
+      background: #1e293b;
+      color: #cbd5e1;
+    }
+
+    .tab-btn.active {
+      background: #22c55e;
+      color: white;
+    }
+
+    .sidebar-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px;
+    }
+
+    .section-title {
+      font-size: 12px;
+      color: #94a3b8;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .user-item,
+    .group-item {
+      padding: 12px;
+      border-radius: 14px;
+      background: #111827;
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      margin-bottom: 10px;
+    }
+
+    .group-item {
+      cursor: pointer;
+    }
+
+    .group-item:hover,
+    .group-item.active {
+      background: #14532d;
+      border-color: rgba(134, 239, 172, 0.35);
+    }
+
+    .item-name {
+      font-weight: bold;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .item-meta {
+      font-size: 12px;
+      color: #94a3b8;
+      line-height: 1.4;
+    }
+
+    .add-group-box {
+      display: none;
+      padding: 14px;
+      border-top: 1px solid rgba(148, 163, 184, 0.18);
+      background: rgba(2, 6, 23, 0.45);
+    }
+
+    .add-group-box.show {
+      display: block;
+    }
+
+    .group-input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      background: #1e293b;
+      margin-bottom: 8px;
+    }
+
+    .add-group-btn {
+      width: 100%;
+      padding: 11px;
+      border-radius: 12px;
+      background: #22c55e;
+      color: white;
+    }
+
+    .main {
+      flex: 1;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background:
+        radial-gradient(circle at top left, rgba(34, 197, 94, 0.08), transparent 28%),
+        radial-gradient(circle at bottom right, rgba(56, 189, 248, 0.08), transparent 28%),
+        #0b1220;
     }
 
     .chat-header {
-      padding: 16px 18px;
-      background: rgba(2, 6, 23, 0.95);
-      border-bottom: 1px solid rgba(148, 163, 184, 0.22);
+      min-height: 76px;
+      padding: 16px 20px;
+      background: rgba(2, 6, 23, 0.92);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.2);
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 12px;
     }
 
-    .chat-header h1 {
-      margin: 0;
+    .chat-title {
       font-size: 21px;
+      font-weight: bold;
+      margin-bottom: 4px;
     }
 
-    .chat-header p {
-      margin: 5px 0 0;
+    .chat-subtitle {
       color: #94a3b8;
       font-size: 13px;
-    }
-
-    .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-      justify-content: flex-end;
     }
 
     .status {
@@ -169,16 +309,6 @@
       border: 1px solid rgba(34, 197, 94, 0.35);
     }
 
-    .logout-btn {
-      background: #334155;
-      padding: 9px 12px;
-      font-size: 12px;
-    }
-
-    .logout-btn:hover {
-      background: #475569;
-    }
-
     .messages {
       flex: 1;
       overflow-y: auto;
@@ -186,16 +316,13 @@
       display: flex;
       flex-direction: column;
       gap: 12px;
-      background:
-        radial-gradient(circle at top left, rgba(34, 197, 94, 0.08), transparent 28%),
-        radial-gradient(circle at bottom right, rgba(56, 189, 248, 0.08), transparent 28%);
     }
 
     .message {
       background: #1e293b;
       padding: 12px 14px;
       border-radius: 16px;
-      max-width: 78%;
+      max-width: 72%;
       word-wrap: break-word;
       border: 1px solid rgba(148, 163, 184, 0.12);
       align-self: flex-start;
@@ -239,8 +366,24 @@
       background: #0f172a;
     }
 
-    .chat-form input {
+    .chat-input {
       flex: 1;
+      padding: 13px;
+      border-radius: 12px;
+      background: #1e293b;
+      font-size: 15px;
+    }
+
+    .send-btn {
+      padding: 13px 18px;
+      border-radius: 12px;
+      background: #22c55e;
+      color: white;
+    }
+
+    .send-btn:hover,
+    .add-group-btn:hover {
+      background: #16a34a;
     }
 
     .empty,
@@ -254,50 +397,60 @@
       color: #f87171;
     }
 
-    @media (max-width: 600px) {
-      .page,
-      .chat-page {
-        padding: 8px;
+    .mobile-toggle {
+      display: none;
+      background: #1e293b;
+      color: white;
+      padding: 9px 11px;
+      border-radius: 10px;
+    }
+
+    @media (max-width: 760px) {
+      .app {
+        position: relative;
       }
 
-      .chat-container {
-        height: 96vh;
-        border-radius: 16px;
+      .sidebar {
+        position: fixed;
+        z-index: 10;
+        left: -320px;
+        top: 0;
+        transition: 0.25s;
+        box-shadow: 20px 0 50px rgba(0, 0, 0, 0.45);
       }
 
-      .chat-header {
-        align-items: flex-start;
-        flex-direction: column;
+      .sidebar.open {
+        left: 0;
       }
 
-      .header-actions {
-        justify-content: flex-start;
+      .mobile-toggle {
+        display: inline-block;
       }
 
       .message {
-        max-width: 94%;
+        max-width: 92%;
       }
 
-      .chat-header h1 {
-        font-size: 19px;
+      .chat-header {
+        padding: 12px;
       }
 
-      .chat-form {
-        gap: 8px;
+      .chat-title {
+        font-size: 18px;
       }
 
-      button {
-        padding: 12px 13px;
+      .messages {
+        padding: 12px;
       }
     }
   </style>
 </head>
 
 <body>
-  <div class="page" id="loginPage">
+  <div class="login-page" id="loginPage">
     <div class="login-card">
       <h1>Login Forum Chat</h1>
-      <p>Masuk menggunakan username dan password yang terdaftar di Supabase.</p>
+      <p>Masuk menggunakan username dan password yang terdaftar.</p>
 
       <form id="loginForm">
         <div class="form-group">
@@ -316,29 +469,57 @@
     </div>
   </div>
 
-  <div class="chat-page" id="chatPage">
-    <div class="chat-container">
-      <div class="chat-header">
-        <div>
-          <h1>Forum Chat</h1>
-          <p id="welcomeText">Chat realtime menggunakan GitHub + Supabase</p>
+  <div class="app" id="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="profile">
+        <div class="profile-name" id="profileName">User</div>
+        <div class="profile-role" id="profileRole">Member</div>
+        <button class="logout-btn" type="button" onclick="logout()">Logout</button>
+      </div>
+
+      <div class="tabs">
+        <button class="tab-btn active" id="usersTabBtn" onclick="switchTab('users')">User</button>
+        <button class="tab-btn" id="groupsTabBtn" onclick="switchTab('groups')">Grup</button>
+      </div>
+
+      <div class="sidebar-content">
+        <div id="usersPanel">
+          <div class="section-title">User Terdaftar</div>
+          <div id="usersList"></div>
         </div>
 
-        <div class="header-actions">
-          <div class="status" id="statusText">Menghubungkan...</div>
-          <button class="logout-btn" type="button" onclick="logout()">Logout</button>
+        <div id="groupsPanel" style="display:none;">
+          <div class="section-title">Room Grup</div>
+          <div id="groupsList"></div>
         </div>
+      </div>
+
+      <div class="add-group-box" id="addGroupBox">
+        <input class="group-input" type="text" id="newGroupName" placeholder="Nama grup baru..." />
+        <button class="add-group-btn" type="button" onclick="createGroup()">Tambah Grup</button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="chat-header">
+        <div>
+          <button class="mobile-toggle" type="button" onclick="toggleSidebar()">☰</button>
+          <div class="chat-title" id="chatTitle">Pilih Grup</div>
+          <div class="chat-subtitle" id="chatSubtitle">Pilih room grup dari sidebar kiri untuk mulai chat.</div>
+        </div>
+
+        <div class="status" id="statusText">Menghubungkan...</div>
       </div>
 
       <div class="messages" id="messages">
-        <p class="empty">Memuat pesan...</p>
+        <p class="empty">Pilih grup dulu.</p>
       </div>
 
       <form class="chat-form" id="chatForm">
-        <input type="text" id="messageInput" placeholder="Tulis pesan..." autocomplete="off" />
-        <button type="submit">Kirim</button>
+        <input class="chat-input" type="text" id="messageInput" placeholder="Tulis pesan..." autocomplete="off" />
+        <button class="send-btn" type="submit">Kirim</button>
       </form>
-    </div>
+    </main>
   </div>
 
   <script>
@@ -348,24 +529,40 @@
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const loginPage = document.getElementById("loginPage");
-    const chatPage = document.getElementById("chatPage");
+    const app = document.getElementById("app");
     const loginForm = document.getElementById("loginForm");
     const loginUsername = document.getElementById("loginUsername");
     const loginPassword = document.getElementById("loginPassword");
     const loginError = document.getElementById("loginError");
 
+    const profileName = document.getElementById("profileName");
+    const profileRole = document.getElementById("profileRole");
+    const usersTabBtn = document.getElementById("usersTabBtn");
+    const groupsTabBtn = document.getElementById("groupsTabBtn");
+    const usersPanel = document.getElementById("usersPanel");
+    const groupsPanel = document.getElementById("groupsPanel");
+    const usersList = document.getElementById("usersList");
+    const groupsList = document.getElementById("groupsList");
+    const addGroupBox = document.getElementById("addGroupBox");
+    const newGroupName = document.getElementById("newGroupName");
+
+    const chatTitle = document.getElementById("chatTitle");
+    const chatSubtitle = document.getElementById("chatSubtitle");
     const messagesDiv = document.getElementById("messages");
     const chatForm = document.getElementById("chatForm");
     const messageInput = document.getElementById("messageInput");
     const statusText = document.getElementById("statusText");
-    const welcomeText = document.getElementById("welcomeText");
+    const sidebar = document.getElementById("sidebar");
 
     let currentUser = null;
+    let currentGroup = null;
+    let allGroups = [];
+    let realtimeStarted = false;
 
-    const savedUser = localStorage.getItem("forum_user");
+    const savedUser = localStorage.getItem("forum_user_v2");
     if (savedUser) {
       currentUser = JSON.parse(savedUser);
-      showChat();
+      openApp();
     }
 
     function escapeHtml(text) {
@@ -384,6 +581,12 @@
       });
     }
 
+    function canManageGroups() {
+      if (!currentUser) return false;
+      const role = String(currentUser.role || "").toLowerCase();
+      return role === "admin" || role === "leader";
+    }
+
     loginForm.addEventListener("submit", async function(e) {
       e.preventDefault();
 
@@ -399,7 +602,7 @@
 
       const { data, error } = await supabaseClient
         .from("users")
-        .select("id, username, display_name, role")
+        .select("id, username, password, display_name, role")
         .eq("username", username)
         .eq("password", password)
         .maybeSingle();
@@ -415,24 +618,198 @@
       }
 
       currentUser = data;
-      localStorage.setItem("forum_user", JSON.stringify(currentUser));
-      showChat();
+      localStorage.setItem("forum_user_v2", JSON.stringify(currentUser));
+      openApp();
     });
 
-    function showChat() {
+    async function openApp() {
       loginPage.style.display = "none";
-      chatPage.style.display = "flex";
+      app.style.display = "flex";
 
-      welcomeText.textContent = "Login sebagai " + currentUser.display_name + " (" + currentUser.role + ")";
+      profileName.textContent = currentUser.display_name;
+      profileRole.textContent = currentUser.role;
 
-      loadMessages();
+      addGroupBox.classList.toggle("show", canManageGroups());
+
+      await loadUsers();
+      await loadGroups();
       startRealtime();
+
+      if (allGroups.length > 0) {
+        selectGroup(allGroups[0].id);
+      }
     }
 
     function logout() {
-      localStorage.removeItem("forum_user");
+      localStorage.removeItem("forum_user_v2");
       currentUser = null;
       location.reload();
+    }
+
+    function toggleSidebar() {
+      sidebar.classList.toggle("open");
+    }
+
+    function switchTab(tab) {
+      if (tab === "users") {
+        usersPanel.style.display = "block";
+        groupsPanel.style.display = "none";
+        usersTabBtn.classList.add("active");
+        groupsTabBtn.classList.remove("active");
+      } else {
+        usersPanel.style.display = "none";
+        groupsPanel.style.display = "block";
+        usersTabBtn.classList.remove("active");
+        groupsTabBtn.classList.add("active");
+      }
+    }
+
+    async function loadUsers() {
+      const { data, error } = await supabaseClient
+        .from("users")
+        .select("id, username, display_name, role")
+        .order("display_name", { ascending: true });
+
+      if (error) {
+        usersList.innerHTML = `<p class="error">Gagal memuat user: ${escapeHtml(error.message)}</p>`;
+        return;
+      }
+
+      usersList.innerHTML = "";
+
+      data.forEach(function(user) {
+        const div = document.createElement("div");
+        div.className = "user-item";
+        div.innerHTML = `
+          <div class="item-name">${escapeHtml(user.display_name)}</div>
+          <div class="item-meta">@${escapeHtml(user.username)} • ${escapeHtml(user.role)}</div>
+        `;
+        usersList.appendChild(div);
+      });
+    }
+
+    async function loadGroups() {
+      const { data, error } = await supabaseClient
+        .from("groups")
+        .select("*")
+        .order("created_at", { ascending: true });
+
+      if (error) {
+        groupsList.innerHTML = `<p class="error">Gagal memuat grup: ${escapeHtml(error.message)}</p>`;
+        return;
+      }
+
+      allGroups = data || [];
+      renderGroups();
+    }
+
+    function renderGroups() {
+      groupsList.innerHTML = "";
+
+      if (allGroups.length === 0) {
+        groupsList.innerHTML = `<p class="empty">Belum ada grup.</p>`;
+        return;
+      }
+
+      allGroups.forEach(function(group) {
+        const div = document.createElement("div");
+        div.className = "group-item";
+
+        if (currentGroup && currentGroup.id === group.id) {
+          div.classList.add("active");
+        }
+
+        div.onclick = function() {
+          selectGroup(group.id);
+        };
+
+        div.innerHTML = `
+          <div class="item-name"># ${escapeHtml(group.name)}</div>
+          <div class="item-meta">Room chat grup</div>
+        `;
+
+        groupsList.appendChild(div);
+      });
+    }
+
+    async function createGroup() {
+      if (!canManageGroups()) {
+        alert("Hanya Admin atau Leader yang bisa menambahkan grup.");
+        return;
+      }
+
+      const name = newGroupName.value.trim();
+
+      if (!name) {
+        alert("Nama grup tidak boleh kosong.");
+        return;
+      }
+
+      const { data, error } = await supabaseClient
+        .from("groups")
+        .insert([
+          {
+            name: name,
+            created_by: currentUser.id
+          }
+        ])
+        .select()
+        .single();
+
+      if (error) {
+        alert("Gagal menambah grup: " + error.message);
+        return;
+      }
+
+      newGroupName.value = "";
+      allGroups.push(data);
+      renderGroups();
+      selectGroup(data.id);
+    }
+
+    async function selectGroup(groupId) {
+      currentGroup = allGroups.find(function(group) {
+        return group.id === groupId;
+      });
+
+      if (!currentGroup) return;
+
+      chatTitle.textContent = "# " + currentGroup.name;
+      chatSubtitle.textContent = "Room chat grup: " + currentGroup.name;
+
+      renderGroups();
+      switchTab("groups");
+      sidebar.classList.remove("open");
+
+      await loadMessages();
+    }
+
+    async function loadMessages() {
+      if (!currentGroup) {
+        messagesDiv.innerHTML = `<p class="empty">Pilih grup dulu.</p>`;
+        return;
+      }
+
+      const { data, error } = await supabaseClient
+        .from("messages")
+        .select("*")
+        .eq("group_id", currentGroup.id)
+        .order("created_at", { ascending: true })
+        .limit(200);
+
+      if (error) {
+        messagesDiv.innerHTML = `<p class="error">Gagal memuat pesan: ${escapeHtml(error.message)}</p>`;
+        return;
+      }
+
+      messagesDiv.innerHTML = "";
+
+      if (!data || data.length === 0) {
+        messagesDiv.innerHTML = `<p class="empty">Belum ada pesan di grup ini.</p>`;
+        return;
+      }
+
+      data.forEach(renderMessage);
     }
 
     function renderMessage(data) {
@@ -453,33 +830,16 @@
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
     }
 
-    async function loadMessages() {
-      const { data, error } = await supabaseClient
-        .from("messages")
-        .select("*")
-        .order("created_at", { ascending: true })
-        .limit(150);
-
-      if (error) {
-        messagesDiv.innerHTML = `<p class="error">Gagal memuat pesan: ${escapeHtml(error.message)}</p>`;
-        return;
-      }
-
-      messagesDiv.innerHTML = "";
-
-      if (!data || data.length === 0) {
-        messagesDiv.innerHTML = `<p class="empty">Belum ada pesan. Jadilah yang pertama!</p>`;
-        return;
-      }
-
-      data.forEach(renderMessage);
-    }
-
     chatForm.addEventListener("submit", async function(e) {
       e.preventDefault();
 
       if (!currentUser) {
         alert("Silakan login dulu.");
+        return;
+      }
+
+      if (!currentGroup) {
+        alert("Pilih grup dulu.");
         return;
       }
 
@@ -493,6 +853,7 @@
         .from("messages")
         .insert([
           {
+            group_id: currentGroup.id,
             user_id: currentUser.id,
             username: currentUser.username,
             display_name: currentUser.display_name,
@@ -505,14 +866,12 @@
       }
     });
 
-    let realtimeStarted = false;
-
     function startRealtime() {
       if (realtimeStarted) return;
       realtimeStarted = true;
 
       supabaseClient
-        .channel("messages-channel")
+        .channel("forum-realtime")
         .on(
           "postgres_changes",
           {
@@ -521,12 +880,31 @@
             table: "messages"
           },
           function(payload) {
+            if (!currentGroup) return;
+            if (payload.new.group_id !== currentGroup.id) return;
+
             const emptyText = messagesDiv.querySelector(".empty");
-            if (emptyText) {
-              messagesDiv.innerHTML = "";
-            }
+            if (emptyText) messagesDiv.innerHTML = "";
 
             renderMessage(payload.new);
+          }
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "groups"
+          },
+          function(payload) {
+            const exists = allGroups.some(function(group) {
+              return group.id === payload.new.id;
+            });
+
+            if (!exists) {
+              allGroups.push(payload.new);
+              renderGroups();
+            }
           }
         )
         .subscribe(function(status) {
