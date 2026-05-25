@@ -25,14 +25,16 @@
     .app{display:none;width:100%;height:100vh;overflow:hidden;background:#020617}
     .sidebar{width:320px;min-width:320px;height:100vh;background:#0f172a;border-right:1px solid rgba(148,163,184,.2);display:flex;flex-direction:column}
     .profile{padding:18px;border-bottom:1px solid rgba(148,163,184,.18);background:rgba(2,6,23,.65)}
-    .profile-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+    .profile-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px}
+    .profile-row{display:flex;align-items:center;gap:10px;min-width:0}
     .profile-avatar,.msg-avatar{width:38px;height:38px;border-radius:50%;object-fit:cover;background:#334155;border:1px solid rgba(148,163,184,.25)}
     .profile-name{font-size:17px;font-weight:bold;margin-bottom:4px}
-    .profile-edit-btn{margin-top:10px;background:#1e293b;color:#cbd5e1;padding:8px 10px;border-radius:10px;width:100%;border:1px solid rgba(148,163,184,.15)}
-    .profile-edit-btn:hover{background:#334155}
+    .profile-actions{display:flex;gap:8px}
+    .profile-icon-btn{width:38px;height:38px;border-radius:12px;background:linear-gradient(180deg,#60a5fa,#2563eb);color:#fff;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 8px 18px rgba(37,99,235,.28);font-size:18px;font-weight:bold}
+    .profile-icon-btn:hover{transform:translateY(-1px);filter:brightness(1.05)}
+    .profile-edit-btn{display:none}
     .profile-role{display:inline-block;font-size:12px;padding:5px 9px;border-radius:999px;color:#86efac;border:1px solid rgba(34,197,94,.35);background:rgba(34,197,94,.12)}
-    .logout-btn{margin-top:13px;background:#334155;color:#fff;padding:9px 12px;border-radius:10px;width:100%}
-    .logout-btn:hover{background:#475569}
+    .logout-btn{display:none}
     .tabs{display:flex;gap:8px;padding:14px 14px 8px}
     .tab-btn{flex:1;padding:10px;border-radius:12px;background:#1e293b;color:#cbd5e1}
     .tab-btn.active{background:#22c55e;color:#fff}
@@ -164,15 +166,20 @@
   <div class="app" id="app">
     <aside class="sidebar" id="sidebar">
       <div class="profile">
-        <div class="profile-row">
-          <img class="profile-avatar" id="myAvatar" src="" alt="Avatar">
-          <div>
-            <div class="profile-name" id="profileName">User</div>
-            <div class="profile-role" id="profileRole">Member</div>
+        <div class="profile-top">
+          <div class="profile-row">
+            <img class="profile-avatar" id="myAvatar" src="" alt="Avatar">
+            <div>
+              <div class="profile-name" id="profileName">User</div>
+              <div class="profile-role" id="profileRole">Member</div>
+            </div>
+          </div>
+
+          <div class="profile-actions">
+            <button class="profile-icon-btn" type="button" title="Pengaturan Profil" onclick="openProfileSettings()">⚙</button>
+            <button class="profile-icon-btn" type="button" title="Logout" onclick="logout()">↪</button>
           </div>
         </div>
-        <button class="profile-edit-btn" type="button" onclick="openProfileSettings()">Pengaturan Profil</button>
-        <button class="logout-btn" type="button" onclick="logout()">Logout</button>
       </div>
 
       <div class="tabs">
