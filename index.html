@@ -40,6 +40,10 @@
     .user-item:hover,.user-item.active,.group-item:hover,.group-item.active{background:#14532d;border-color:rgba(134,239,172,.35)}
     .item-name{font-weight:bold;font-size:14px;margin-bottom:4px;padding-right:34px}
     .item-meta{font-size:12px;color:#94a3b8;line-height:1.4}
+    .user-status{display:inline-flex;align-items:center;gap:5px;margin-top:5px;font-size:11px;color:#94a3b8}
+    .dot{width:8px;height:8px;border-radius:999px;background:#64748b;display:inline-block}
+    .dot.online{background:#22c55e;box-shadow:0 0 8px rgba(34,197,94,.8)}
+    .dot.offline{background:#64748b}
     .badge{position:absolute;right:10px;top:10px;min-width:22px;height:22px;border-radius:999px;background:#ef4444;color:#fff;font-size:12px;display:none;align-items:center;justify-content:center;padding:0 6px}
     .badge.show{display:flex}
     .add-group-box{display:none;padding:14px;border-top:1px solid rgba(148,163,184,.18);background:rgba(2,6,23,.45)}
@@ -241,11 +245,45 @@
       return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 15h10l1-15"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>`;
     }
 
+    function isUserOnline(user){
+      if(!user)return false;
+      if(user.is_online === true)return true;
+      if(!user.last_seen)return false;
+      const diff = Date.now() - new Date(user.last_seen).getTime();
+      return diff < 45000;
+    }
+
+    function onlineStatusHtml(user){
+      const online = isUserOnline(user);
+      return `<div class="user-status"><span class="dot ${online ? "online" : "offline"}"></span>${online ? "Online" : "Offline"}</div>`;
+    }
+
+    async function setMyOnlineStatus(isOnline){
+      if(!currentUser || !currentUser.id)return;
+      await supabaseClient
+        .from("users")
+        .update({
+          is_online: isOnline,
+          last_seen: new Date().toISOString()
+        })
+        .eq("id", currentUser.id);
+    }
+
+    let heartbeatTimer = null;
+
+    function startHeartbeat(){
+      if(heartbeatTimer) clearInterval(heartbeatTimer);
+      setMyOnlineStatus(true);
+      heartbeatTimer = setInterval(function(){
+        setMyOnlineStatus(true);
+      }, 30000);
+    }
+
     loginForm.addEventListener("submit",async e=>{
       e.preventDefault(); loginError.textContent="";
       const username=loginUsername.value.trim(), password=loginPassword.value.trim();
       if(!username||!password){loginError.textContent="Username dan password wajib diisi.";return}
-      const {data,error}=await supabaseClient.from("users").select("id,username,password,display_name,role").eq("username",username).eq("password",password).maybeSingle();
+      const {data,error}=await supabaseClient.from("users").select("id,username,password,display_name,role,is_online,last_seen").eq("username",username).eq("password",password).maybeSingle();
       if(error){loginError.textContent="Gagal login: "+error.message;return}
       if(!data){loginError.textContent="Username atau password salah.";return}
       currentUser=data; localStorage.setItem("forum_user_pro",JSON.stringify(currentUser)); openApp();
@@ -254,11 +292,36 @@
     async function openApp(){
       loginPage.style.display="none"; app.style.display="flex";
       profileName.textContent=currentUser.display_name; profileRole.textContent=currentUser.role;
+      startHeartbeat();
       addGroupBox.classList.toggle("show",canManageGroups());
       await loadUsers(); await loadGroups(); startRealtime(); switchTab("users");
     }
 
-    function logout(){localStorage.removeItem("forum_user_pro");location.reload()}
+    async function logout(){
+      await setMyOnlineStatus(false);
+      localStorage.removeItem("forum_user_pro");
+      location.reload();
+    }
+
+    window.addEventListener("beforeunload", function(){
+      if(currentUser && navigator.sendBeacon){
+        const url = SUPABASE_URL + "/rest/v1/users?id=eq." + currentUser.id;
+        const body = JSON.stringify({
+          is_online: false,
+          last_seen: new Date().toISOString()
+        });
+        navigator.sendBeacon(url, new Blob([body], {type: "application/json"}));
+      }
+    });
+
+    document.addEventListener("visibilitychange", function(){
+      if(!currentUser)return;
+      if(document.visibilityState === "visible"){
+        setMyOnlineStatus(true);
+      }else{
+        setMyOnlineStatus(false);
+      }
+    });
     function toggleSidebar(){sidebar.classList.toggle("open")}
 
     function switchTab(tab){
@@ -277,7 +340,7 @@
     function handleSearch(){activeTab==="users"?renderUsers():renderGroups()}
 
     async function loadUsers(){
-      const {data,error}=await supabaseClient.from("users").select("id,username,display_name,role").neq("id",currentUser.id).order("display_name",{ascending:true});
+      const {data,error}=await supabaseClient.from("users").select("id,username,display_name,role,is_online,last_seen").neq("id",currentUser.id).order("display_name",{ascending:true});
       if(error){usersList.innerHTML=`<p class="error">Gagal memuat user: ${escapeHtml(error.message)}</p>`;return}
       allUsers=data||[]; await loadVisibleUsersByConversation(); renderUsers();
     }
@@ -302,7 +365,7 @@
         if(currentTargetUser&&currentTargetUser.id===user.id&&currentMode==="private") div.classList.add("active");
         div.onclick=()=>selectUser(user.id);
         const count=unreadPrivate[user.id]||0;
-        div.innerHTML=`<div class="item-name">${escapeHtml(user.display_name)}</div><div class="item-meta">@${escapeHtml(user.username)} • ${escapeHtml(user.role)}</div><div class="badge ${count>0?"show":""}">${count}</div>`;
+        div.innerHTML=`<div class="item-name">${escapeHtml(user.display_name)}</div><div class="item-meta">@${escapeHtml(user.username)} • ${escapeHtml(user.role)}</div>${onlineStatusHtml(user)}<div class="badge ${count>0?"show":""}">${count}</div>`;
         usersList.appendChild(div);
       });
     }
@@ -572,6 +635,16 @@
         })
         .on("postgres_changes",{event:"INSERT",schema:"public",table:"groups"},payload=>{
           if(!allGroups.some(g=>g.id===payload.new.id)){allGroups.push(payload.new);renderGroups()}
+        })
+        .on("postgres_changes",{event:"UPDATE",schema:"public",table:"users"},payload=>{
+          const updated = payload.new;
+          allUsers = allUsers.map(function(user){
+            return user.id === updated.id ? {...user, is_online: updated.is_online, last_seen: updated.last_seen} : user;
+          });
+          visibleUsers = visibleUsers.map(function(user){
+            return user.id === updated.id ? {...user, is_online: updated.is_online, last_seen: updated.last_seen} : user;
+          });
+          renderUsers();
         })
         .subscribe(status=>{
           if(status==="SUBSCRIBED"){statusText.textContent="Online";statusText.classList.add("online")}
