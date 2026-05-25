@@ -377,7 +377,10 @@
 
     .badge{
       background:linear-gradient(135deg,#ef4444,#f97316);
-      box-shadow:0 8px 18px rgba(239,68,68,.25);
+      box-shadow:0 8px 18px rgba(239,68,68,.35);
+      z-index:3;
+      font-weight:bold;
+      border:1px solid rgba(255,255,255,.22);
     }
 
     .main{
@@ -959,6 +962,7 @@
         await loadUsers();
         await loadMyGroupIds();
         await loadGroups();
+        await refreshUnreadBadges();
         if(activeTab === "users") renderUsers();
         if(activeTab === "groups") renderGroups();
       }, 7000);
@@ -1024,6 +1028,7 @@
       await loadUsers();
       await loadMyGroupIds();
       await loadGroups();
+      await refreshUnreadBadges();
 
       switchTab("users");
       startRealtime();
@@ -1065,6 +1070,79 @@
     }
 
     function handleSearch(){activeTab==="users"?renderUsers():renderGroups()}
+
+    function getReadKey(type, id){
+      return "forum_read_" + currentUser.id + "_" + type + "_" + id;
+    }
+
+    function getLastRead(type, id){
+      return localStorage.getItem(getReadKey(type, id)) || "1970-01-01T00:00:00.000Z";
+    }
+
+    function setLastRead(type, id){
+      localStorage.setItem(getReadKey(type, id), new Date().toISOString());
+    }
+
+    function addUnreadPrivate(userId, amount){
+      if(!userId)return;
+      unreadPrivate[userId]=(unreadPrivate[userId]||0)+(amount||1);
+      renderUsers();
+    }
+
+    function addUnreadGroup(groupId, amount){
+      if(!groupId)return;
+      unreadGroups[groupId]=(unreadGroups[groupId]||0)+(amount||1);
+      renderGroups();
+    }
+
+    async function refreshUnreadBadges(){
+      if(!currentUser)return;
+
+      unreadPrivate={};
+      unreadGroups={};
+
+      const {data:privateData}=await supabaseClient
+        .from("private_messages")
+        .select("sender_id,receiver_id,created_at")
+        .or("sender_id.eq."+currentUser.id+",receiver_id.eq."+currentUser.id)
+        .order("created_at",{ascending:false})
+        .limit(500);
+
+      (privateData||[]).forEach(function(msg){
+        if(msg.sender_id===currentUser.id)return;
+
+        const otherId=msg.sender_id===currentUser.id ? msg.receiver_id : msg.sender_id;
+        const lastRead=getLastRead("private", otherId);
+
+        if(new Date(msg.created_at).getTime()>new Date(lastRead).getTime()){
+          unreadPrivate[otherId]=(unreadPrivate[otherId]||0)+1;
+        }
+      });
+
+      const groupIds=(allGroups||[]).map(function(group){return group.id;});
+
+      if(groupIds.length){
+        const {data:groupData}=await supabaseClient
+          .from("messages")
+          .select("group_id,username,created_at")
+          .in("group_id", groupIds)
+          .order("created_at",{ascending:false})
+          .limit(800);
+
+        (groupData||[]).forEach(function(msg){
+          if(msg.username===currentUser.username)return;
+
+          const lastRead=getLastRead("group", msg.group_id);
+
+          if(new Date(msg.created_at).getTime()>new Date(lastRead).getTime()){
+            unreadGroups[msg.group_id]=(unreadGroups[msg.group_id]||0)+1;
+          }
+        });
+      }
+
+      renderUsers();
+      renderGroups();
+    }
 
     async function loadUsers(){
       const {data,error}=await supabaseClient.from("users").select("id,username,display_name,role,is_online,last_seen,avatar_url").neq("id",currentUser.id).order("display_name",{ascending:true});
@@ -1230,6 +1308,7 @@
       currentMode="private";
       currentGroup=null;
       unreadPrivate[userId]=0;
+      setLastRead("private", userId);
       cancelReply();
       cancelEdit();
       clearFile(false);
@@ -1241,6 +1320,9 @@
       renderUsers();
       sidebar.classList.remove("open");
       await loadPrivateMessages();
+      setLastRead("private", currentTargetUser.id);
+      unreadPrivate[currentTargetUser.id]=0;
+      renderUsers();
     }
 
     async function selectGroup(groupId){
@@ -1250,6 +1332,7 @@
       currentMode="group";
       currentTargetUser=null;
       unreadGroups[groupId]=0;
+      setLastRead("group", groupId);
       cancelReply();
       cancelEdit();
       clearFile(false);
@@ -1264,6 +1347,9 @@
       renderGroups();
       sidebar.classList.remove("open");
       await loadGroupMessages();
+      setLastRead("group", currentGroup.id);
+      unreadGroups[currentGroup.id]=0;
+      renderGroups();
     }
 
     async function loadPrivateMessages(){
@@ -1955,7 +2041,11 @@
             const empty=messagesDiv.querySelector(".empty"); if(empty)messagesDiv.innerHTML="";
             renderMessage(msg);
           }else if(msg.username!==currentUser.username){
-            unreadGroups[msg.group_id]=(unreadGroups[msg.group_id]||0)+1; renderGroups();
+            const lastRead=getLastRead("group", msg.group_id);
+            if(new Date(msg.created_at).getTime()>new Date(lastRead).getTime()){
+              unreadGroups[msg.group_id]=(unreadGroups[msg.group_id]||0)+1;
+            }
+            renderGroups();
           }
         })
         .on("postgres_changes",{event:"UPDATE",schema:"public",table:"messages"},payload=>{
@@ -1971,7 +2061,10 @@
             const empty=messagesDiv.querySelector(".empty"); if(empty)messagesDiv.innerHTML="";
             renderMessage(msg);
           }else if(msg.sender_id!==currentUser.id){
-            unreadPrivate[otherId]=(unreadPrivate[otherId]||0)+1;
+            const lastRead=getLastRead("private", otherId);
+            if(new Date(msg.created_at).getTime()>new Date(lastRead).getTime()){
+              unreadPrivate[otherId]=(unreadPrivate[otherId]||0)+1;
+            }
           }
           renderUsers();
         })
@@ -2010,6 +2103,7 @@
           if(member.user_id===currentUser.id){
             if(!myGroupIds.includes(member.group_id)) myGroupIds.push(member.group_id);
             await loadGroups();
+            await refreshUnreadBadges();
           }
 
           if(currentGroup && member.group_id===currentGroup.id){
