@@ -133,7 +133,50 @@
     .invite-user-btn{background:#22c55e;color:#fff;border-radius:10px;padding:8px 10px;font-size:12px}
     .invite-user-btn.added{background:#334155;color:#94a3b8;cursor:not-allowed}
 
+    
+    .toast-wrap{position:fixed;right:18px;bottom:18px;z-index:12000;display:flex;flex-direction:column;gap:10px;pointer-events:none}
+    .toast{min-width:220px;max-width:340px;background:rgba(15,23,42,.96);border:1px solid rgba(148,163,184,.25);border-left:4px solid #22c55e;border-radius:14px;padding:12px 14px;color:#fff;box-shadow:0 18px 40px rgba(0,0,0,.45);font-size:13px;animation:toastIn .18s ease-out}
+    .toast.error{border-left-color:#ef4444}
+    .toast.warn{border-left-color:#f59e0b}
+    .toast-title{font-weight:bold;margin-bottom:3px}
+    .toast-text{color:#cbd5e1;line-height:1.35}
+    @keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+    .chat-tools{display:none;align-items:center;gap:8px}
+    .chat-tools.show{display:flex}
+    .chat-search{width:260px;max-width:34vw;background:#1e293b;color:#fff;border-radius:12px;padding:10px 12px;border:1px solid rgba(148,163,184,.18)}
+    .tool-btn{width:38px;height:38px;border-radius:12px;background:linear-gradient(180deg,#3b82f6,#2563eb);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 8px 18px rgba(37,99,235,.28)}
+    .tool-btn:hover{filter:brightness(1.05)}
+
+    .group-settings-card{width:100%;max-width:560px;background:#0f172a;border:1px solid rgba(148,163,184,.22);border-radius:18px;box-shadow:0 25px 70px rgba(0,0,0,.6);overflow:hidden}
+    .group-settings-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;padding:18px 18px 14px;border-bottom:1px solid rgba(148,163,184,.16)}
+    .group-settings-title{display:flex;gap:12px;align-items:center}
+    .group-icon{width:44px;height:44px;border-radius:50%;object-fit:cover;background:#1e293b;border:1px solid rgba(148,163,184,.22)}
+    .group-title-main{font-size:18px;font-weight:bold}
+    .group-title-sub{font-size:12px;color:#94a3b8;margin-top:3px}
+    .group-tabs{display:flex;border-bottom:1px solid rgba(148,163,184,.16)}
+    .group-tab-btn{flex:1;padding:12px;background:#0f172a;color:#94a3b8;border-radius:0;border-bottom:2px solid transparent}
+    .group-tab-btn.active{color:#93c5fd;border-bottom-color:#3b82f6;background:#111827}
+    .group-tab-panel{display:none;padding:18px}
+    .group-tab-panel.active{display:block}
+    .settings-section-title{font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px}
+    .group-avatar-row{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+    .group-avatar-large{width:72px;height:72px;border-radius:50%;object-fit:cover;background:#1e293b;border:1px solid rgba(148,163,184,.22)}
+    .blue-btn{background:#2563eb;color:#fff;border-radius:12px;padding:10px 12px;font-size:13px}
+    .blue-btn:hover{background:#1d4ed8}
+    .danger-btn{background:#dc2626;color:#fff;border-radius:12px;padding:10px 13px;font-size:13px}
+    .danger-btn:hover{background:#b91c1c}
+    .group-name-row{display:flex;gap:8px;align-items:center}
+    .group-name-input{flex:1;background:#1e293b;color:#fff;border-radius:12px;padding:11px;border:1px solid rgba(148,163,184,.16)}
+    .member-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;border-radius:12px;background:#111827;border:1px solid rgba(148,163,184,.14);margin-bottom:8px}
+    .member-info{min-width:0}
+    .member-name{font-weight:bold;font-size:13px}
+    .member-meta{color:#94a3b8;font-size:12px;margin-top:3px}
+
     @media(max-width:760px){
+      .chat-tools{width:100%;margin-top:8px}
+      .chat-search{width:100%;max-width:none}
+
       .sidebar{position:fixed;z-index:10;left:-330px;top:0;transition:.25s;box-shadow:20px 0 50px rgba(0,0,0,.45)}
       .sidebar.open{left:0}
       .mobile-toggle{display:inline-block}
@@ -229,6 +272,11 @@
           <div class="chat-subtitle" id="chatSubtitle">Pilih user untuk chat pribadi atau pilih grup.</div>
         </div>
         <div class="header-actions">
+          <div class="chat-tools" id="chatTools">
+            <input class="chat-search" id="messageSearchInput" type="text" placeholder="Cari pesan di chat ini..." oninput="filterCurrentMessages()">
+            <button class="tool-btn" id="messageSearchBtn" type="button" title="Cari Pesan" onclick="filterCurrentMessages()">🔍</button>
+            <button class="tool-btn" id="groupSettingsBtn" type="button" title="Pengaturan Grup" onclick="openGroupSettings()">⚙</button>
+          </div>
           <button class="invite-btn" id="inviteBtn" type="button" onclick="openInviteModal()">Undang</button>
           <div class="status" id="statusText">Menghubungkan...</div>
         </div>
@@ -258,6 +306,62 @@
         <button class="send-btn" type="submit">Kirim</button>
       </form>
     </main>
+  </div>
+
+  <div class="toast-wrap" id="toastWrap"></div>
+
+  <div class="modal" id="groupSettingsModal">
+    <div class="group-settings-card">
+      <div class="group-settings-head">
+        <div class="group-settings-title">
+          <img class="group-icon" id="settingsGroupAvatar" src="" alt="Group">
+          <div>
+            <div class="group-title-main">Pengaturan Grup</div>
+            <div class="group-title-sub" id="settingsGroupNameSub">-</div>
+          </div>
+        </div>
+        <button class="modal-close" onclick="closeGroupSettings()">×</button>
+      </div>
+
+      <div class="group-tabs">
+        <button class="group-tab-btn active" id="groupTabSettings" onclick="switchGroupSettingsTab('settings')">⚙ Pengaturan</button>
+        <button class="group-tab-btn" id="groupTabMembers" onclick="switchGroupSettingsTab('members')">👥 Anggota</button>
+        <button class="group-tab-btn" id="groupTabAdd" onclick="switchGroupSettingsTab('add')">👥 Tambah</button>
+      </div>
+
+      <div class="group-tab-panel active" id="groupPanelSettings">
+        <div class="settings-section-title">Gambar Profil Grup</div>
+        <div class="group-avatar-row">
+          <img class="group-avatar-large" id="settingsGroupAvatarLarge" src="" alt="Group">
+          <div>
+            <div style="font-size:13px;color:#cbd5e1;margin-bottom:8px;">Gambar profil saat ini</div>
+            <input type="file" id="groupAvatarInput" accept="image/*" style="display:none" onchange="saveGroupAvatar()">
+            <button class="blue-btn" onclick="document.getElementById('groupAvatarInput').click()">Ubah Gambar</button>
+          </div>
+        </div>
+
+        <div class="settings-section-title">Informasi Grup</div>
+        <label>Nama Grup</label>
+        <div class="group-name-row">
+          <input class="group-name-input" id="groupNameInput" type="text" placeholder="Nama grup">
+          <button class="blue-btn" onclick="saveGroupName()">Simpan</button>
+        </div>
+
+        <div style="height:18px"></div>
+        <button class="danger-btn" onclick="deleteCurrentGroup()">Hapus Grup</button>
+      </div>
+
+      <div class="group-tab-panel" id="groupPanelMembers">
+        <div class="settings-section-title">Anggota Grup</div>
+        <div id="groupMembersList"></div>
+      </div>
+
+      <div class="group-tab-panel" id="groupPanelAdd">
+        <div class="settings-section-title">Tambah Anggota</div>
+        <input class="modal-input" type="text" id="groupAddSearchInput" placeholder="Cari nama user..." oninput="renderGroupAddUsers()">
+        <div class="invite-list" id="groupAddUsersList"></div>
+      </div>
+    </div>
   </div>
 
   <div class="modal" id="profileSettingsModal">
@@ -320,6 +424,12 @@
     const usersList = document.getElementById("usersList"), groupsList = document.getElementById("groupsList"), addGroupBox = document.getElementById("addGroupBox"), newGroupName = document.getElementById("newGroupName"), searchInput = document.getElementById("searchInput");
     const chatTitle = document.getElementById("chatTitle"), chatSubtitle = document.getElementById("chatSubtitle"), messagesDiv = document.getElementById("messages"), chatForm = document.getElementById("chatForm"), messageInput = document.getElementById("messageInput"), statusText = document.getElementById("statusText"), sidebar = document.getElementById("sidebar");
     const inviteBtn = document.getElementById("inviteBtn"), inviteModal = document.getElementById("inviteModal"), inviteSearchInput = document.getElementById("inviteSearchInput"), inviteUsersList = document.getElementById("inviteUsersList");
+    const toastWrap = document.getElementById("toastWrap");
+    const chatTools = document.getElementById("chatTools"), messageSearchInput = document.getElementById("messageSearchInput"), groupSettingsBtn = document.getElementById("groupSettingsBtn");
+    const groupSettingsModal = document.getElementById("groupSettingsModal"), settingsGroupAvatar = document.getElementById("settingsGroupAvatar"), settingsGroupAvatarLarge = document.getElementById("settingsGroupAvatarLarge"), settingsGroupNameSub = document.getElementById("settingsGroupNameSub"), groupNameInput = document.getElementById("groupNameInput"), groupAvatarInput = document.getElementById("groupAvatarInput");
+    const groupTabSettings = document.getElementById("groupTabSettings"), groupTabMembers = document.getElementById("groupTabMembers"), groupTabAdd = document.getElementById("groupTabAdd");
+    const groupPanelSettings = document.getElementById("groupPanelSettings"), groupPanelMembers = document.getElementById("groupPanelMembers"), groupPanelAdd = document.getElementById("groupPanelAdd");
+    const groupMembersList = document.getElementById("groupMembersList"), groupAddSearchInput = document.getElementById("groupAddSearchInput"), groupAddUsersList = document.getElementById("groupAddUsersList");
     const fileInput = document.getElementById("fileInput"), filePreview = document.getElementById("filePreview"), filePreviewText = document.getElementById("filePreviewText");
     const myAvatar = document.getElementById("myAvatar");
     const profileSettingsModal = document.getElementById("profileSettingsModal"), settingsDisplayName = document.getElementById("settingsDisplayName"), settingsPassword = document.getElementById("settingsPassword"), settingsAvatarFile = document.getElementById("settingsAvatarFile");
@@ -331,6 +441,7 @@
     let currentUser=null,currentTargetUser=null,currentGroup=null,currentMode="private",activeTab="users";
     let allUsers=[],visibleUsers=[],allGroups=[],myGroupIds=[],currentGroupMembers=[],realtimeStarted=false;
     let unreadPrivate={}, unreadGroups={};
+    let currentMessagesCache=[];
     let selectedFile=null, replyTo=null, editingMessage=null;
 
     function hideLoading(){
@@ -357,6 +468,20 @@
     }
 
     function escapeHtml(text){const div=document.createElement("div");div.textContent=text||"";return div.innerHTML}
+
+    function showToast(message, type="success", title="Info"){
+      if(!toastWrap)return;
+      const toast=document.createElement("div");
+      toast.className="toast " + (type || "success");
+      toast.innerHTML=`<div class="toast-title">${escapeHtml(title)}</div><div class="toast-text">${escapeHtml(message)}</div>`;
+      toastWrap.appendChild(toast);
+      setTimeout(function(){
+        toast.style.opacity="0";
+        toast.style.transform="translateY(8px)";
+        toast.style.transition=".2s";
+        setTimeout(function(){ toast.remove(); }, 220);
+      }, 2200);
+    }
     function shortText(text,max=80){text=String(text||"");return text.length>max?text.slice(0,max)+"...":text}
     function formatTime(dateString){const date=new Date(dateString);return date.toLocaleString("id-ID",{hour:"2-digit",minute:"2-digit",day:"2-digit",month:"short"})}
     function canManageGroups(){
@@ -376,6 +501,14 @@
       if(!inviteBtn)return;
       inviteBtn.classList.toggle("show", currentMode === "group" && !!currentGroup && canInviteToCurrentGroup());
     }
+
+    function updateChatTools(){
+      if(!chatTools)return;
+      chatTools.classList.toggle("show", !!currentGroup || !!currentTargetUser);
+      if(groupSettingsBtn){
+        groupSettingsBtn.style.display = (currentMode === "group" && !!currentGroup) ? "inline-flex" : "none";
+      }
+    }
     function makeConversationKey(a,b){const ids=[Number(a),Number(b)].sort((x,y)=>x-y);return ids[0]+"_"+ids[1]}
     function isImage(type,name){return String(type||"").startsWith("image/") || /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(String(name||""))}
 
@@ -389,6 +522,10 @@
         return userOrUrl || defaultAvatar(name);
       }
       return (userOrUrl && userOrUrl.avatar_url) ? userOrUrl.avatar_url : defaultAvatar(userOrUrl?.display_name || name || "User");
+    }
+
+    function groupAvatarSrc(group){
+      return group && group.avatar_url ? group.avatar_url : defaultAvatar(group?.name || "G");
     }
 
     function displayReplyName(name){
@@ -690,13 +827,13 @@
 
     async function createGroup(){
       if(!canManageGroups()){
-        alert("Hanya Admin atau Leader yang bisa menambahkan grup.");
+        showToast("Hanya Admin atau Leader yang bisa menambahkan grup.", "warn", "Info");
         return;
       }
 
       const name=newGroupName.value.trim();
       if(!name){
-        alert("Nama grup tidak boleh kosong.");
+        showToast("Nama grup tidak boleh kosong.", "warn", "Info");
         return;
       }
 
@@ -707,7 +844,7 @@
         .single();
 
       if(error){
-        alert("Gagal menambah grup: "+error.message);
+        showToast(String("Gagal menambah grup: "+error.message), "warn", "Info");
         return;
       }
 
@@ -767,6 +904,7 @@
       chatSubtitle.textContent="Room chat grup: "+currentGroup.name;
 
       updateInviteButton();
+      updateChatTools();
       renderGroups();
       sidebar.classList.remove("open");
       await loadGroupMessages();
@@ -786,11 +924,63 @@
     }
 
     function renderMessageList(data,error,emptyText){
-      if(error){messagesDiv.innerHTML=`<p class="error">Gagal memuat pesan: ${escapeHtml(error.message)}</p>`;return}
+      if(error){
+        messagesDiv.innerHTML=`<p class="error">Gagal memuat pesan: ${escapeHtml(error.message)}</p>`;
+        return;
+      }
+
+      currentMessagesCache = data || [];
+
+      if(messageSearchInput && messageSearchInput.value.trim()){
+        filterCurrentMessages();
+        return;
+      }
+
       messagesDiv.innerHTML="";
-      if(!data||!data.length){messagesDiv.innerHTML=`<p class="empty">${emptyText}</p>`;return}
+      if(!data||!data.length){
+        messagesDiv.innerHTML=`<p class="empty">${emptyText}</p>`;
+        return;
+      }
+
       data.forEach(renderMessage);
       messagesDiv.scrollTop=messagesDiv.scrollHeight;
+    }
+
+    function filterCurrentMessages(){
+      const keyword=(messageSearchInput?.value || "").trim().toLowerCase();
+      const source=currentMessagesCache || [];
+
+      if(!keyword){
+        messagesDiv.innerHTML="";
+        if(!source.length){
+          messagesDiv.innerHTML=`<p class="empty">Belum ada pesan.</p>`;
+          return;
+        }
+        source.forEach(renderMessage);
+        return;
+      }
+
+      const filtered=source.filter(function(msg){
+        const text=[
+          msg.message,
+          msg.display_name,
+          msg.username,
+          msg.file_name,
+          msg.reply_to_text,
+          msg.reply_to_display_name
+        ].join(" ").toLowerCase();
+
+        return text.includes(keyword);
+      });
+
+      messagesDiv.innerHTML="";
+
+      if(!filtered.length){
+        messagesDiv.innerHTML=`<p class="empty">Pesan tidak ditemukan.</p>`;
+        return;
+      }
+
+      filtered.forEach(renderMessage);
     }
 
     function renderMessage(data){
@@ -884,7 +1074,7 @@
     function cancelReply(){replyTo=null; replyPreview.classList.remove("show"); replyPreviewText.textContent=""}
 
     function setEdit(msg){
-      if(!msg.message && msg.file_url){alert("Pesan file tanpa teks tidak bisa diedit teksnya.");return}
+      if(!msg.message && msg.file_url){showToast("Pesan file tanpa teks tidak bisa diedit teksnya.", "warn", "Perhatian");return}
       editingMessage=msg; cancelReply();
       editPreviewText.textContent="Mengedit: "+shortText(msg.message,90);
       editPreview.classList.add("show");
@@ -919,12 +1109,12 @@
 
     chatForm.addEventListener("submit",async e=>{
       e.preventDefault();
-      if(!currentUser){alert("Silakan login dulu.");return}
+      if(!currentUser){showToast("Silakan login dulu.", "warn", "Perhatian");return}
 
       const message=messageInput.value.trim();
 
       if(editingMessage){
-        if(!message){alert("Pesan tidak boleh kosong.");return}
+        if(!message){showToast("Pesan tidak boleh kosong.", "warn", "Perhatian");return}
         await updateMessageText(message);
         return;
       }
@@ -938,16 +1128,15 @@
     async function updateMessageText(message){
       const table=editingMessage.mode==="group"?"messages":"private_messages";
       const {error}=await supabaseClient.from(table).update({message,edited_at:new Date().toISOString()}).eq("id",editingMessage.id);
-      if(error){alert("Gagal edit pesan: "+error.message);return}
+      if(error){showToast("Gagal edit pesan: "+error.message, "error", "Gagal");return}
       cancelEdit();
       if(currentMode==="group") await loadGroupMessages(); else await loadPrivateMessages();
     }
 
     async function deleteMessage(msg){
-      if(!confirm("Hapus pesan ini?"))return;
       const table=msg.mode==="group"?"messages":"private_messages";
       const {error}=await supabaseClient.from(table).update({is_deleted:true,message:"",file_url:null,file_name:null,file_type:null,edited_at:new Date().toISOString()}).eq("id",msg.id);
-      if(error){alert("Gagal hapus pesan: "+error.message);return}
+      if(error){showToast("Gagal hapus pesan: "+error.message, "error", "Gagal");return}
       if(currentMode==="group") await loadGroupMessages(); else await loadPrivateMessages();
     }
 
@@ -961,7 +1150,7 @@
     }
 
     async function sendGroupMessage(message){
-      if(!currentGroup){alert("Pilih grup dulu.");return}
+      if(!currentGroup){showToast("Pilih grup dulu.", "warn", "Perhatian");return}
       try{
         const file=await uploadFile();
         messageInput.value="";
@@ -971,11 +1160,11 @@
         }]);
         if(error)throw error;
         cancelReply(); clearFile();
-      }catch(err){alert("Gagal mengirim pesan grup: "+err.message)}
+      }catch(err){showToast("Gagal mengirim pesan grup: "+err.message, "error", "Gagal")}
     }
 
     async function sendPrivateMessage(message){
-      if(!currentTargetUser){alert("Pilih user dulu.");return}
+      if(!currentTargetUser){showToast("Pilih user dulu.", "warn", "Perhatian");return}
       try{
         const file=await uploadFile();
         const key=makeConversationKey(currentUser.id,currentTargetUser.id);
@@ -987,7 +1176,7 @@
         if(error)throw error;
         cancelReply(); clearFile();
         if(!visibleUsers.some(u=>u.id===currentTargetUser.id)){visibleUsers.push(currentTargetUser);renderUsers()}
-      }catch(err){alert("Gagal mengirim pesan pribadi: "+err.message)}
+      }catch(err){showToast("Gagal mengirim pesan pribadi: "+err.message, "error", "Gagal")}
     }
 
     function openImagePopup(url){
@@ -1044,7 +1233,7 @@
       const avatarFile = settingsAvatarFile.files[0];
 
       if(!displayName){
-        alert("Nama tampilan tidak boleh kosong.");
+        showToast("Nama tampilan tidak boleh kosong.", "warn", "Perhatian");
         return;
       }
 
@@ -1081,9 +1270,9 @@
         if(currentMode === "private" && currentTargetUser) await loadPrivateMessages();
 
         closeProfileSettings();
-        alert("Profil berhasil diperbarui.");
+        showToast("Profil berhasil diperbarui.", "success", "Berhasil");
       }catch(err){
-        alert("Gagal menyimpan profil: " + err.message);
+        showToast("Gagal menyimpan profil: " + err.message, "error", "Gagal");
       }
     }
 
@@ -1108,12 +1297,12 @@
 
     function openInviteModal(){
       if(!currentGroup){
-        alert("Pilih grup dulu.");
+        showToast("Pilih grup dulu.", "warn", "Info");
         return;
       }
 
       if(!canInviteToCurrentGroup()){
-        alert("Kamu belum punya akses untuk mengundang user ke grup ini.");
+        showToast("Kamu belum punya akses untuk mengundang user ke grup ini.", "warn", "Perhatian");
         return;
       }
 
@@ -1163,7 +1352,7 @@
 
     async function inviteUserToGroup(userId){
       if(!currentGroup){
-        alert("Pilih grup dulu.");
+        showToast("Pilih grup dulu.", "warn", "Info");
         return;
       }
 
@@ -1177,17 +1366,214 @@
 
       if(error){
         if(String(error.message||"").toLowerCase().includes("duplicate")){
-          alert("User sudah ada di grup.");
+          showToast("User sudah ada di grup.", "warn", "Info");
         }else{
-          alert("Gagal mengundang user: "+error.message);
+          showToast("Gagal mengundang user: "+error.message, "error", "Gagal");
         }
         return;
       }
 
       await loadCurrentGroupMembers();
       renderInviteUsers();
-      alert("User berhasil diundang ke grup.");
+      showToast("User berhasil diundang ke grup.", "success", "Berhasil");
     }
+
+    
+    function switchGroupSettingsTab(tab){
+      const tabs = [
+        [groupTabSettings, groupPanelSettings, "settings"],
+        [groupTabMembers, groupPanelMembers, "members"],
+        [groupTabAdd, groupPanelAdd, "add"]
+      ];
+
+      tabs.forEach(function(item){
+        item[0].classList.toggle("active", item[2] === tab);
+        item[1].classList.toggle("active", item[2] === tab);
+      });
+
+      if(tab === "members") renderGroupMembers();
+      if(tab === "add") renderGroupAddUsers();
+    }
+
+    function openGroupSettings(){
+      if(!currentGroup){
+        showToast("Pilih grup dulu.", "warn", "Perhatian");
+        return;
+      }
+
+      settingsGroupAvatar.src = groupAvatarSrc(currentGroup);
+      settingsGroupAvatarLarge.src = groupAvatarSrc(currentGroup);
+      settingsGroupNameSub.textContent = currentGroup.name;
+      groupNameInput.value = currentGroup.name || "";
+      groupSettingsModal.classList.add("show");
+      switchGroupSettingsTab("settings");
+      loadCurrentGroupMembers().then(renderGroupMembers);
+    }
+
+    function closeGroupSettings(){
+      groupSettingsModal.classList.remove("show");
+    }
+
+    async function saveGroupName(){
+      if(!currentGroup)return;
+      const name = groupNameInput.value.trim();
+
+      if(!name){
+        showToast("Nama grup tidak boleh kosong.", "warn", "Perhatian");
+        return;
+      }
+
+      const {data,error}=await supabaseClient
+        .from("groups")
+        .update({name:name})
+        .eq("id", currentGroup.id)
+        .select()
+        .single();
+
+      if(error){
+        showToast("Gagal mengubah nama grup: " + error.message, "error", "Gagal");
+        return;
+      }
+
+      currentGroup = {...currentGroup, ...data};
+      allGroups = allGroups.map(function(group){
+        return group.id === currentGroup.id ? currentGroup : group;
+      });
+
+      chatTitle.textContent = "# " + currentGroup.name;
+      chatSubtitle.textContent = "Room chat grup: " + currentGroup.name;
+      settingsGroupNameSub.textContent = currentGroup.name;
+      renderGroups();
+      showToast("Nama grup berhasil diubah.", "success", "Berhasil");
+    }
+
+    async function saveGroupAvatar(){
+      if(!currentGroup)return;
+      const file = groupAvatarInput.files[0];
+
+      if(!file)return;
+
+      try{
+        const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
+        const path=`groups/${currentGroup.id}_${Date.now()}_${safeName}`;
+        const {error:uploadError}=await supabaseClient.storage.from(BUCKET_NAME).upload(path,file,{cacheControl:"3600",upsert:false});
+        if(uploadError)throw uploadError;
+
+        const {data:publicData}=supabaseClient.storage.from(BUCKET_NAME).getPublicUrl(path);
+        const avatarUrl=publicData.publicUrl;
+
+        const {data,error}=await supabaseClient
+          .from("groups")
+          .update({avatar_url:avatarUrl})
+          .eq("id", currentGroup.id)
+          .select()
+          .single();
+
+        if(error)throw error;
+
+        currentGroup = {...currentGroup, ...data};
+        allGroups = allGroups.map(function(group){
+          return group.id === currentGroup.id ? currentGroup : group;
+        });
+
+        settingsGroupAvatar.src = groupAvatarSrc(currentGroup);
+        settingsGroupAvatarLarge.src = groupAvatarSrc(currentGroup);
+        renderGroups();
+        showToast("Gambar grup berhasil diubah.", "success", "Berhasil");
+      }catch(err){
+        showToast("Gagal mengubah gambar grup: " + err.message, "error", "Gagal");
+      }
+    }
+
+    async function deleteCurrentGroup(){
+      if(!currentGroup)return;
+
+      const groupName=currentGroup.name;
+      const {error}=await supabaseClient
+        .from("groups")
+        .delete()
+        .eq("id", currentGroup.id);
+
+      if(error){
+        showToast("Gagal menghapus grup: " + error.message, "error", "Gagal");
+        return;
+      }
+
+      allGroups=allGroups.filter(function(group){ return group.id !== currentGroup.id; });
+      myGroupIds=myGroupIds.filter(function(id){ return id !== currentGroup.id; });
+      currentGroup=null;
+      currentMode="private";
+      closeGroupSettings();
+      updateInviteButton();
+      updateChatTools();
+      renderGroups();
+      chatTitle.textContent="Pilih Chat";
+      chatSubtitle.textContent="Pilih user untuk chat pribadi atau pilih grup.";
+      messagesDiv.innerHTML=`<p class="empty">Pilih chat dulu.</p>`;
+      showToast("Grup " + groupName + " berhasil dihapus.", "success", "Berhasil");
+    }
+
+    function renderGroupMembers(){
+      const memberIds=new Set(currentGroupMembers.map(function(member){ return member.user_id; }));
+      const members=[currentUser].concat(allUsers).filter(function(user, index, arr){
+        return user && memberIds.has(user.id) && arr.findIndex(function(x){ return x && x.id === user.id; }) === index;
+      });
+
+      groupMembersList.innerHTML="";
+
+      if(!members.length){
+        groupMembersList.innerHTML=`<p class="empty">Belum ada anggota.</p>`;
+        return;
+      }
+
+      members.forEach(function(user){
+        const row=document.createElement("div");
+        row.className="member-row";
+        row.innerHTML=`
+          <div class="member-info">
+            <div class="member-name">${escapeHtml(user.display_name)}</div>
+            <div class="member-meta">@${escapeHtml(user.username)} • ${escapeHtml(user.role)}</div>
+          </div>
+        `;
+        groupMembersList.appendChild(row);
+      });
+    }
+
+    function renderGroupAddUsers(){
+      if(!currentGroup)return;
+
+      const keyword=(groupAddSearchInput.value || "").trim().toLowerCase();
+      const memberIds=new Set(currentGroupMembers.map(function(member){ return member.user_id; }));
+
+      const filtered=allUsers.filter(function(user){
+        const text=(user.display_name+" "+user.username+" "+user.role).toLowerCase();
+        return text.includes(keyword);
+      });
+
+      groupAddUsersList.innerHTML="";
+
+      if(!filtered.length){
+        groupAddUsersList.innerHTML=`<p class="empty">User tidak ditemukan.</p>`;
+        return;
+      }
+
+      filtered.forEach(function(user){
+        const alreadyMember=memberIds.has(user.id);
+        const row=document.createElement("div");
+        row.className="invite-user-row";
+        row.innerHTML=`
+          <div class="invite-user-info">
+            <div class="invite-user-name">${escapeHtml(user.display_name)}</div>
+            <div class="invite-user-meta">@${escapeHtml(user.username)} • ${escapeHtml(user.role)}</div>
+          </div>
+          <button class="invite-user-btn ${alreadyMember ? "added" : ""}" ${alreadyMember ? "disabled" : ""} onclick="inviteUserToGroup(${user.id})">
+            ${alreadyMember ? "Sudah" : "Tambah"}
+          </button>
+        `;
+        groupAddUsersList.appendChild(row);
+      });
+    }
+
 
     function startRealtime(){
       if(realtimeStarted)return; realtimeStarted=true;
@@ -1224,6 +1610,28 @@
         })
         .on("postgres_changes",{event:"INSERT",schema:"public",table:"groups"},payload=>{
           if(!allGroups.some(g=>g.id===payload.new.id)){allGroups.push(payload.new);renderGroups()}
+        })
+        .on("postgres_changes",{event:"UPDATE",schema:"public",table:"groups"},payload=>{
+          allGroups=allGroups.map(function(group){ return group.id===payload.new.id ? {...group,...payload.new} : group; });
+          if(currentGroup && currentGroup.id===payload.new.id){
+            currentGroup={...currentGroup,...payload.new};
+            chatTitle.textContent="# "+currentGroup.name;
+            chatSubtitle.textContent="Room chat grup: "+currentGroup.name;
+          }
+          renderGroups();
+        })
+        .on("postgres_changes",{event:"DELETE",schema:"public",table:"groups"},payload=>{
+          allGroups=allGroups.filter(function(group){ return group.id!==payload.old.id; });
+          if(currentGroup && currentGroup.id===payload.old.id){
+            currentGroup=null;
+            currentMode="private";
+            updateInviteButton();
+            updateChatTools();
+            chatTitle.textContent="Pilih Chat";
+            chatSubtitle.textContent="Pilih user untuk chat pribadi atau pilih grup.";
+            messagesDiv.innerHTML=`<p class="empty">Grup telah dihapus.</p>`;
+          }
+          renderGroups();
         })
         .on("postgres_changes",{event:"INSERT",schema:"public",table:"group_members"},async payload=>{
           const member=payload.new;
