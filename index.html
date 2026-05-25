@@ -253,11 +253,13 @@
     }
 
     function isUserOnline(user){
-      if(!user)return false;
-      if(user.is_online === true)return true;
-      if(!user.last_seen)return false;
+      if(!user || !user.last_seen)return false;
+
       const diff = Date.now() - new Date(user.last_seen).getTime();
-      return diff < 45000;
+
+      // Status online hanya valid kalau heartbeat masih baru.
+      // Ini mencegah status nyangkut Online setelah logout / tab ditutup.
+      return user.is_online === true && diff < 45000;
     }
 
     function onlineStatusHtml(user){
@@ -292,7 +294,7 @@
       setMyOnlineStatus(true);
       heartbeatTimer = setInterval(function(){
         setMyOnlineStatus(true);
-      }, 30000);
+      }, 15000);
     }
 
     let listRefreshTimer = null;
@@ -306,7 +308,16 @@
         await loadGroups();
         if(activeTab === "users") renderUsers();
         if(activeTab === "groups") renderGroups();
-      }, 12000);
+      }, 7000);
+    }
+
+    let statusRenderTimer = null;
+
+    function startStatusRenderTimer(){
+      if(statusRenderTimer) clearInterval(statusRenderTimer);
+      statusRenderTimer = setInterval(function(){
+        if(activeTab === "users") renderUsers();
+      }, 5000);
     }
 
     loginForm.addEventListener("submit",async e=>{
@@ -361,6 +372,7 @@
       switchTab("users");
       startRealtime();
       startAutoRefreshLists();
+      startStatusRenderTimer();
     }
 
     async function logout(){
