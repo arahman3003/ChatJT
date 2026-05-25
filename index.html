@@ -216,12 +216,19 @@
     let selectedFile=null, replyTo=null, editingMessage=null;
 
     const savedUser = localStorage.getItem("forum_user_pro");
-    if(savedUser){ currentUser=JSON.parse(savedUser); openApp(); }
+    if(savedUser){
+      try {
+        currentUser = JSON.parse(savedUser);
+        restoreSession();
+      } catch(e) {
+        localStorage.removeItem("forum_user_pro");
+      }
+    }
 
     function escapeHtml(text){const div=document.createElement("div");div.textContent=text||"";return div.innerHTML}
     function shortText(text,max=80){text=String(text||"");return text.length>max?text.slice(0,max)+"...":text}
     function formatTime(dateString){const date=new Date(dateString);return date.toLocaleString("id-ID",{hour:"2-digit",minute:"2-digit",day:"2-digit",month:"short"})}
-    function canManageGroups(){const role=String(currentUser?.role||"").toLowerCase();return role==="admin"||role==="leader"}
+    function canManageGroups(){const role=String(currentUser?.role||"").trim().toLowerCase();return role==="admin"||role==="leader"}
     function makeConversationKey(a,b){const ids=[Number(a),Number(b)].sort((x,y)=>x-y);return ids[0]+"_"+ids[1]}
     function isImage(type,name){return String(type||"").startsWith("image/") || /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(String(name||""))}
 
@@ -260,13 +267,22 @@
 
     async function setMyOnlineStatus(isOnline){
       if(!currentUser || !currentUser.id)return;
-      await supabaseClient
+
+      const now = new Date().toISOString();
+
+      const { error } = await supabaseClient
         .from("users")
         .update({
           is_online: isOnline,
-          last_seen: new Date().toISOString()
+          last_seen: now
         })
         .eq("id", currentUser.id);
+
+      if(!error){
+        currentUser.is_online = isOnline;
+        currentUser.last_seen = now;
+        localStorage.setItem("forum_user_pro", JSON.stringify(currentUser));
+      }
     }
 
     let heartbeatTimer = null;
@@ -279,6 +295,20 @@
       }, 30000);
     }
 
+    let listRefreshTimer = null;
+
+    function startAutoRefreshLists(){
+      if(listRefreshTimer) clearInterval(listRefreshTimer);
+
+      listRefreshTimer = setInterval(async function(){
+        if(!currentUser)return;
+        await loadUsers();
+        await loadGroups();
+        if(activeTab === "users") renderUsers();
+        if(activeTab === "groups") renderGroups();
+      }, 12000);
+    }
+
     loginForm.addEventListener("submit",async e=>{
       e.preventDefault(); loginError.textContent="";
       const username=loginUsername.value.trim(), password=loginPassword.value.trim();
@@ -289,37 +319,66 @@
       currentUser=data; localStorage.setItem("forum_user_pro",JSON.stringify(currentUser)); openApp();
     });
 
+    async function restoreSession(){
+      if(!currentUser || !currentUser.id){
+        localStorage.removeItem("forum_user_pro");
+        return;
+      }
+
+      const { data, error } = await supabaseClient
+        .from("users")
+        .select("id,username,password,display_name,role,is_online,last_seen")
+        .eq("id", currentUser.id)
+        .maybeSingle();
+
+      if(error || !data){
+        localStorage.removeItem("forum_user_pro");
+        location.reload();
+        return;
+      }
+
+      currentUser = data;
+      localStorage.setItem("forum_user_pro", JSON.stringify(currentUser));
+      openApp();
+    }
+
     async function openApp(){
-      loginPage.style.display="none"; app.style.display="flex";
-      profileName.textContent=currentUser.display_name; profileRole.textContent=currentUser.role;
+      loginPage.style.display="none";
+      app.style.display="flex";
+
+      profileName.textContent = currentUser.display_name || currentUser.username || "User";
+      profileRole.textContent = currentUser.role || "Member";
+
+      statusText.textContent = "Online";
+      statusText.classList.add("online");
+
       startHeartbeat();
-      addGroupBox.classList.toggle("show",canManageGroups());
-      await loadUsers(); await loadGroups(); startRealtime(); switchTab("users");
+      addGroupBox.classList.toggle("show", canManageGroups());
+
+      await loadUsers();
+      await loadGroups();
+
+      switchTab("users");
+      startRealtime();
+      startAutoRefreshLists();
     }
 
     async function logout(){
-      await setMyOnlineStatus(false);
+      try {
+        await setMyOnlineStatus(false);
+      } catch(e) {}
       localStorage.removeItem("forum_user_pro");
       location.reload();
     }
 
     window.addEventListener("beforeunload", function(){
-      if(currentUser && navigator.sendBeacon){
-        const url = SUPABASE_URL + "/rest/v1/users?id=eq." + currentUser.id;
-        const body = JSON.stringify({
-          is_online: false,
-          last_seen: new Date().toISOString()
-        });
-        navigator.sendBeacon(url, new Blob([body], {type: "application/json"}));
-      }
+      localStorage.setItem("forum_last_close", new Date().toISOString());
     });
 
     document.addEventListener("visibilitychange", function(){
       if(!currentUser)return;
       if(document.visibilityState === "visible"){
         setMyOnlineStatus(true);
-      }else{
-        setMyOnlineStatus(false);
       }
     });
     function toggleSidebar(){sidebar.classList.toggle("open")}
@@ -346,7 +405,7 @@
     }
 
     async function loadVisibleUsersByConversation(){
-      const role=String(currentUser.role||"").toLowerCase();
+      const role=String(currentUser.role||"").trim().toLowerCase();
       if(role==="admin"||role==="leader"){visibleUsers=allUsers;return}
       const {data,error}=await supabaseClient.from("private_messages").select("sender_id,receiver_id").or("sender_id.eq."+currentUser.id+",receiver_id.eq."+currentUser.id);
       if(error){visibleUsers=[];return}
@@ -647,8 +706,13 @@
           renderUsers();
         })
         .subscribe(status=>{
-          if(status==="SUBSCRIBED"){statusText.textContent="Online";statusText.classList.add("online")}
-          else{statusText.textContent="Menghubungkan...";statusText.classList.remove("online")}
+          if(status==="SUBSCRIBED"){
+            statusText.textContent="Online";
+            statusText.classList.add("online");
+          }else if(status==="CHANNEL_ERROR" || status==="TIMED_OUT"){
+            statusText.textContent="Online";
+            statusText.classList.add("online");
+          }
         });
     }
   </script>
