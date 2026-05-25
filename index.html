@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!-- Theme: AURORA BERGERAK -->
+  <!-- Theme: API MERAH-ORANYE -->
 <title>Forum Chat Pro</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -894,59 +894,54 @@
 
 </style>
 
-<style id="theme-aurora">
+<style id="theme-fire-red-orange">
   .login-page{
     background:
-      linear-gradient(135deg,#020617,#031220 45%,#081321 100%) !important;
+      radial-gradient(circle at 16% 18%, rgba(249,115,22,.10), transparent 22%),
+      radial-gradient(circle at 82% 16%, rgba(239,68,68,.10), transparent 22%),
+      radial-gradient(circle at 50% 90%, rgba(251,191,36,.08), transparent 18%),
+      linear-gradient(135deg,#120307,#1b0606 38%,#0b0a18 100%) !important;
   }
-  .login-page::before{
-    background:
-      radial-gradient(circle at 16% 22%, rgba(56,189,248,.16), transparent 18%),
-      radial-gradient(circle at 78% 18%, rgba(34,197,94,.14), transparent 16%),
-      radial-gradient(circle at 30% 78%, rgba(167,139,250,.12), transparent 16%),
-      radial-gradient(circle at 72% 76%, rgba(45,212,191,.12), transparent 18%) !important;
-    animation:loginNeonDrift 16s ease-in-out infinite alternate !important;
-  }
-  .login-page::after{
-    background:
-      linear-gradient(120deg, rgba(34,197,94,.00) 10%, rgba(34,197,94,.10) 24%, rgba(56,189,248,.18) 42%, rgba(167,139,250,.12) 58%, rgba(45,212,191,.16) 74%, rgba(34,197,94,.00) 90%);
-    filter:blur(56px) !important;
-    opacity:.72 !important;
-    animation:auroraSweep 14s ease-in-out infinite alternate !important;
-  }
-  .login-ambient{
-    filter:blur(90px) !important;
-    opacity:.62 !important;
-  }
+
   .login-ambient.ambient-1{
-    background:radial-gradient(circle, rgba(56,189,248,.28), rgba(56,189,248,.05) 58%, transparent 72%) !important;
+    background:radial-gradient(circle, rgba(249,115,22,.44), rgba(249,115,22,.08) 58%, transparent 72%) !important;
   }
   .login-ambient.ambient-2{
-    background:radial-gradient(circle, rgba(34,197,94,.22), rgba(34,197,94,.04) 58%, transparent 72%) !important;
+    background:radial-gradient(circle, rgba(239,68,68,.34), rgba(239,68,68,.06) 58%, transparent 72%) !important;
   }
   .login-ambient.ambient-3{
-    background:radial-gradient(circle, rgba(167,139,250,.18), rgba(167,139,250,.04) 56%, transparent 72%) !important;
+    background:radial-gradient(circle, rgba(251,191,36,.26), rgba(251,191,36,.05) 56%, transparent 72%) !important;
   }
   .login-ambient.ambient-4{
-    background:radial-gradient(circle, rgba(45,212,191,.18), rgba(45,212,191,.04) 54%, transparent 70%) !important;
+    background:radial-gradient(circle, rgba(244,63,94,.22), rgba(244,63,94,.05) 54%, transparent 70%) !important;
   }
-  .login-fireline{
-    opacity:.18 !important;
+  .login-fireline.fireline-1{
+    background:
+      radial-gradient(ellipse at 8% 100%, rgba(239,68,68,.24), transparent 32%),
+      radial-gradient(ellipse at 24% 100%, rgba(249,115,22,.32), transparent 30%),
+      radial-gradient(ellipse at 42% 100%, rgba(251,191,36,.30), transparent 32%),
+      radial-gradient(ellipse at 60% 100%, rgba(249,115,22,.28), transparent 32%),
+      radial-gradient(ellipse at 78% 100%, rgba(239,68,68,.20), transparent 28%),
+      radial-gradient(ellipse at 92% 100%, rgba(251,191,36,.18), transparent 30%) !important;
+    opacity:.72 !important;
+  }
+  .login-fireline.fireline-2{
+    background:
+      radial-gradient(ellipse at 18% 100%, rgba(255,255,255,.08), transparent 18%),
+      radial-gradient(ellipse at 38% 100%, rgba(251,191,36,.14), transparent 18%),
+      radial-gradient(ellipse at 56% 100%, rgba(249,115,22,.14), transparent 20%),
+      radial-gradient(ellipse at 74% 100%, rgba(239,68,68,.14), transparent 18%) !important;
+    opacity:.52 !important;
   }
   .login-page h1{
-    background:linear-gradient(90deg,#ffffff,#bfdbfe 28%,#99f6e4 58%,#c4b5fd 84%) !important;
+    background:linear-gradient(90deg,#fff7ed,#fdba74 35%,#fb7185 68%,#fde68a) !important;
     -webkit-background-clip:text !important;
     background-clip:text !important;
     color:transparent !important;
   }
   .login-page .login-btn{
-    background:linear-gradient(135deg,#14b8a6,#3b82f6,#8b5cf6) !important;
-    box-shadow:0 14px 30px rgba(59,130,246,.16),0 0 24px rgba(20,184,166,.14) !important;
-  }
-  @keyframes auroraSweep{
-    0%{transform:translate3d(-8%,4%,0) rotate(-8deg) scale(1.05);}
-    50%{transform:translate3d(4%,-2%,0) rotate(2deg) scale(1.12);}
-    100%{transform:translate3d(10%,-6%,0) rotate(8deg) scale(1.08);}
+    background:linear-gradient(135deg,#ef4444,#f97316,#f59e0b) !important;
+    box-shadow:0 14px 30px rgba(239,68,68,.20),0 0 24px rgba(249,115,22,.18) !important;
   }
 </style>
 
