@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Forum Chat</title>
+  <title>Forum Chat Login</title>
 
-  <!-- Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -17,73 +16,53 @@
     body {
       margin: 0;
       min-height: 100vh;
-      background: linear-gradient(135deg, #111827, #020617);
+      background: linear-gradient(135deg, #020617, #0f172a);
       color: white;
+    }
+
+    .page {
+      min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      padding: 20px;
+      padding: 18px;
     }
 
-    .chat-container {
+    .login-card {
       width: 100%;
-      max-width: 850px;
-      height: 90vh;
-      background: rgba(15, 23, 42, 0.96);
+      max-width: 390px;
+      background: rgba(15, 23, 42, 0.97);
       border: 1px solid rgba(148, 163, 184, 0.25);
-      border-radius: 20px;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
+      border-radius: 22px;
+      padding: 24px;
       box-shadow: 0 25px 60px rgba(0, 0, 0, 0.55);
     }
 
-    .chat-header {
-      padding: 18px 20px;
-      background: rgba(2, 6, 23, 0.92);
-      border-bottom: 1px solid rgba(148, 163, 184, 0.22);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
+    .login-card h1 {
+      margin: 0 0 6px;
+      font-size: 25px;
     }
 
-    .chat-header h1 {
-      margin: 0;
-      font-size: 22px;
-    }
-
-    .chat-header p {
-      margin: 5px 0 0;
+    .login-card p {
+      margin: 0 0 20px;
       color: #94a3b8;
       font-size: 14px;
     }
 
-    .status {
-      font-size: 12px;
-      padding: 7px 10px;
-      border-radius: 999px;
-      background: #1e293b;
+    .form-group {
+      margin-bottom: 13px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 7px;
       color: #cbd5e1;
-      white-space: nowrap;
-    }
-
-    .status.online {
-      background: rgba(34, 197, 94, 0.15);
-      color: #86efac;
-      border: 1px solid rgba(34, 197, 94, 0.35);
-    }
-
-    .name-box {
-      display: flex;
-      gap: 10px;
-      padding: 15px;
-      border-bottom: 1px solid rgba(148, 163, 184, 0.2);
-      background: #0f172a;
+      font-size: 13px;
+      font-weight: bold;
     }
 
     input {
-      flex: 1;
+      width: 100%;
       padding: 13px;
       border: none;
       border-radius: 12px;
@@ -113,6 +92,93 @@
       transform: translateY(-1px);
     }
 
+    .login-btn {
+      width: 100%;
+      margin-top: 5px;
+    }
+
+    .error-text {
+      color: #f87171;
+      font-size: 13px;
+      margin-top: 12px;
+      min-height: 18px;
+    }
+
+    .chat-page {
+      min-height: 100vh;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      padding: 18px;
+    }
+
+    .chat-container {
+      width: 100%;
+      max-width: 900px;
+      height: 92vh;
+      background: rgba(15, 23, 42, 0.96);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      border-radius: 20px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.55);
+    }
+
+    .chat-header {
+      padding: 16px 18px;
+      background: rgba(2, 6, 23, 0.95);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.22);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .chat-header h1 {
+      margin: 0;
+      font-size: 21px;
+    }
+
+    .chat-header p {
+      margin: 5px 0 0;
+      color: #94a3b8;
+      font-size: 13px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .status {
+      font-size: 12px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: #1e293b;
+      color: #cbd5e1;
+      white-space: nowrap;
+    }
+
+    .status.online {
+      background: rgba(34, 197, 94, 0.15);
+      color: #86efac;
+      border: 1px solid rgba(34, 197, 94, 0.35);
+    }
+
+    .logout-btn {
+      background: #334155;
+      padding: 9px 12px;
+      font-size: 12px;
+    }
+
+    .logout-btn:hover {
+      background: #475569;
+    }
+
     .messages {
       flex: 1;
       overflow-y: auto;
@@ -132,6 +198,7 @@
       max-width: 78%;
       word-wrap: break-word;
       border: 1px solid rgba(148, 163, 184, 0.12);
+      align-self: flex-start;
     }
 
     .message.me {
@@ -172,8 +239,8 @@
       background: #0f172a;
     }
 
-    .hidden {
-      display: none;
+    .chat-form input {
+      flex: 1;
     }
 
     .empty,
@@ -188,7 +255,8 @@
     }
 
     @media (max-width: 600px) {
-      body {
+      .page,
+      .chat-page {
         padding: 8px;
       }
 
@@ -202,6 +270,10 @@
         flex-direction: column;
       }
 
+      .header-actions {
+        justify-content: flex-start;
+      }
+
       .message {
         max-width: 94%;
       }
@@ -210,7 +282,6 @@
         font-size: 19px;
       }
 
-      .name-box,
       .chat-form {
         gap: 8px;
       }
@@ -223,28 +294,51 @@
 </head>
 
 <body>
-  <div class="chat-container">
-    <div class="chat-header">
-      <div>
-        <h1>Forum Chat</h1>
-        <p>Chat realtime menggunakan GitHub + Supabase</p>
+  <div class="page" id="loginPage">
+    <div class="login-card">
+      <h1>Login Forum Chat</h1>
+      <p>Masuk menggunakan username dan password yang terdaftar di Supabase.</p>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" id="loginUsername" placeholder="Contoh: danu" autocomplete="username" />
+        </div>
+
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="loginPassword" placeholder="Masukkan password" autocomplete="current-password" />
+        </div>
+
+        <button class="login-btn" type="submit">Masuk</button>
+        <div class="error-text" id="loginError"></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="chat-page" id="chatPage">
+    <div class="chat-container">
+      <div class="chat-header">
+        <div>
+          <h1>Forum Chat</h1>
+          <p id="welcomeText">Chat realtime menggunakan GitHub + Supabase</p>
+        </div>
+
+        <div class="header-actions">
+          <div class="status" id="statusText">Menghubungkan...</div>
+          <button class="logout-btn" type="button" onclick="logout()">Logout</button>
+        </div>
       </div>
-      <div class="status" id="statusText">Menghubungkan...</div>
-    </div>
 
-    <div class="name-box" id="nameBox">
-      <input type="text" id="usernameInput" placeholder="Masukkan nama kamu..." />
-      <button type="button" onclick="saveName()">Masuk</button>
-    </div>
+      <div class="messages" id="messages">
+        <p class="empty">Memuat pesan...</p>
+      </div>
 
-    <div class="messages" id="messages">
-      <p class="empty">Memuat pesan...</p>
+      <form class="chat-form" id="chatForm">
+        <input type="text" id="messageInput" placeholder="Tulis pesan..." autocomplete="off" />
+        <button type="submit">Kirim</button>
+      </form>
     </div>
-
-    <form class="chat-form" id="chatForm">
-      <input type="text" id="messageInput" placeholder="Tulis pesan..." autocomplete="off" />
-      <button type="submit">Kirim</button>
-    </form>
   </div>
 
   <script>
@@ -253,30 +347,31 @@
 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    const loginPage = document.getElementById("loginPage");
+    const chatPage = document.getElementById("chatPage");
+    const loginForm = document.getElementById("loginForm");
+    const loginUsername = document.getElementById("loginUsername");
+    const loginPassword = document.getElementById("loginPassword");
+    const loginError = document.getElementById("loginError");
+
     const messagesDiv = document.getElementById("messages");
     const chatForm = document.getElementById("chatForm");
     const messageInput = document.getElementById("messageInput");
-    const usernameInput = document.getElementById("usernameInput");
-    const nameBox = document.getElementById("nameBox");
     const statusText = document.getElementById("statusText");
+    const welcomeText = document.getElementById("welcomeText");
 
-    let username = localStorage.getItem("chat_username") || "";
+    let currentUser = null;
 
-    if (username) {
-      nameBox.classList.add("hidden");
+    const savedUser = localStorage.getItem("forum_user");
+    if (savedUser) {
+      currentUser = JSON.parse(savedUser);
+      showChat();
     }
 
-    function saveName() {
-      const name = usernameInput.value.trim();
-
-      if (!name) {
-        alert("Nama tidak boleh kosong");
-        return;
-      }
-
-      username = name;
-      localStorage.setItem("chat_username", username);
-      nameBox.classList.add("hidden");
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text || "";
+      return div.innerHTML;
     }
 
     function formatTime(dateString) {
@@ -289,22 +384,67 @@
       });
     }
 
-    function escapeHtml(text) {
-      const div = document.createElement("div");
-      div.textContent = text;
-      return div.innerHTML;
+    loginForm.addEventListener("submit", async function(e) {
+      e.preventDefault();
+
+      loginError.textContent = "";
+
+      const username = loginUsername.value.trim();
+      const password = loginPassword.value.trim();
+
+      if (!username || !password) {
+        loginError.textContent = "Username dan password wajib diisi.";
+        return;
+      }
+
+      const { data, error } = await supabaseClient
+        .from("users")
+        .select("id, username, display_name, role")
+        .eq("username", username)
+        .eq("password", password)
+        .maybeSingle();
+
+      if (error) {
+        loginError.textContent = "Gagal login: " + error.message;
+        return;
+      }
+
+      if (!data) {
+        loginError.textContent = "Username atau password salah.";
+        return;
+      }
+
+      currentUser = data;
+      localStorage.setItem("forum_user", JSON.stringify(currentUser));
+      showChat();
+    });
+
+    function showChat() {
+      loginPage.style.display = "none";
+      chatPage.style.display = "flex";
+
+      welcomeText.textContent = "Login sebagai " + currentUser.display_name + " (" + currentUser.role + ")";
+
+      loadMessages();
+      startRealtime();
+    }
+
+    function logout() {
+      localStorage.removeItem("forum_user");
+      currentUser = null;
+      location.reload();
     }
 
     function renderMessage(data) {
       const div = document.createElement("div");
       div.className = "message";
 
-      if (data.username === username) {
+      if (currentUser && data.username === currentUser.username) {
         div.classList.add("me");
       }
 
       div.innerHTML = `
-        <div class="user">${escapeHtml(data.username)}</div>
+        <div class="user">${escapeHtml(data.display_name || data.username)}</div>
         <div class="text">${escapeHtml(data.message)}</div>
         <div class="time">${formatTime(data.created_at)}</div>
       `;
@@ -318,7 +458,7 @@
         .from("messages")
         .select("*")
         .order("created_at", { ascending: true })
-        .limit(100);
+        .limit(150);
 
       if (error) {
         messagesDiv.innerHTML = `<p class="error">Gagal memuat pesan: ${escapeHtml(error.message)}</p>`;
@@ -338,8 +478,8 @@
     chatForm.addEventListener("submit", async function(e) {
       e.preventDefault();
 
-      if (!username) {
-        alert("Masukkan nama dulu");
+      if (!currentUser) {
+        alert("Silakan login dulu.");
         return;
       }
 
@@ -353,7 +493,9 @@
         .from("messages")
         .insert([
           {
-            username: username,
+            user_id: currentUser.id,
+            username: currentUser.username,
+            display_name: currentUser.display_name,
             message: message
           }
         ]);
@@ -363,35 +505,40 @@
       }
     });
 
-    supabaseClient
-      .channel("messages-channel")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "messages"
-        },
-        function(payload) {
-          const emptyText = messagesDiv.querySelector(".empty");
-          if (emptyText) {
-            messagesDiv.innerHTML = "";
+    let realtimeStarted = false;
+
+    function startRealtime() {
+      if (realtimeStarted) return;
+      realtimeStarted = true;
+
+      supabaseClient
+        .channel("messages-channel")
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "messages"
+          },
+          function(payload) {
+            const emptyText = messagesDiv.querySelector(".empty");
+            if (emptyText) {
+              messagesDiv.innerHTML = "";
+            }
+
+            renderMessage(payload.new);
           }
-
-          renderMessage(payload.new);
-        }
-      )
-      .subscribe(function(status) {
-        if (status === "SUBSCRIBED") {
-          statusText.textContent = "Online";
-          statusText.classList.add("online");
-        } else {
-          statusText.textContent = "Menghubungkan...";
-          statusText.classList.remove("online");
-        }
-      });
-
-    loadMessages();
+        )
+        .subscribe(function(status) {
+          if (status === "SUBSCRIBED") {
+            statusText.textContent = "Online";
+            statusText.classList.add("online");
+          } else {
+            statusText.textContent = "Menghubungkan...";
+            statusText.classList.remove("online");
+          }
+        });
+    }
   </script>
 </body>
 </html>
