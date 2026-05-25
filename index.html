@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Forum Chat Grup</title>
+  <title>Forum Chat Private & Grup</title>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -92,7 +92,8 @@
 
     .login-card input::placeholder,
     .chat-input::placeholder,
-    .group-input::placeholder {
+    .group-input::placeholder,
+    .search-input::placeholder {
       color: #94a3b8;
     }
 
@@ -125,8 +126,8 @@
     }
 
     .sidebar {
-      width: 310px;
-      min-width: 310px;
+      width: 320px;
+      min-width: 320px;
       height: 100vh;
       background: #0f172a;
       border-right: 1px solid rgba(148, 163, 184, 0.2);
@@ -172,8 +173,7 @@
     .tabs {
       display: flex;
       gap: 8px;
-      padding: 14px;
-      border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+      padding: 14px 14px 8px;
     }
 
     .tab-btn {
@@ -187,6 +187,19 @@
     .tab-btn.active {
       background: #22c55e;
       color: white;
+    }
+
+    .search-box {
+      padding: 0 14px 14px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: 12px;
+      background: #1e293b;
+      font-size: 14px;
     }
 
     .sidebar-content {
@@ -210,12 +223,11 @@
       background: #111827;
       border: 1px solid rgba(148, 163, 184, 0.12);
       margin-bottom: 10px;
-    }
-
-    .group-item {
       cursor: pointer;
     }
 
+    .user-item:hover,
+    .user-item.active,
     .group-item:hover,
     .group-item.active {
       background: #14532d;
@@ -259,6 +271,10 @@
       border-radius: 12px;
       background: #22c55e;
       color: white;
+    }
+
+    .add-group-btn:hover {
+      background: #16a34a;
     }
 
     .main {
@@ -381,8 +397,7 @@
       color: white;
     }
 
-    .send-btn:hover,
-    .add-group-btn:hover {
+    .send-btn:hover {
       background: #16a34a;
     }
 
@@ -403,6 +418,7 @@
       color: white;
       padding: 9px 11px;
       border-radius: 10px;
+      margin-right: 8px;
     }
 
     @media (max-width: 760px) {
@@ -413,7 +429,7 @@
       .sidebar {
         position: fixed;
         z-index: 10;
-        left: -320px;
+        left: -330px;
         top: 0;
         transition: 0.25s;
         box-shadow: 20px 0 50px rgba(0, 0, 0, 0.45);
@@ -482,9 +498,13 @@
         <button class="tab-btn" id="groupsTabBtn" onclick="switchTab('groups')">Grup</button>
       </div>
 
+      <div class="search-box">
+        <input class="search-input" type="text" id="searchInput" placeholder="Cari nama user..." oninput="handleSearch()" />
+      </div>
+
       <div class="sidebar-content">
         <div id="usersPanel">
-          <div class="section-title">User Terdaftar</div>
+          <div class="section-title">Chat Pribadi</div>
           <div id="usersList"></div>
         </div>
 
@@ -504,15 +524,15 @@
       <div class="chat-header">
         <div>
           <button class="mobile-toggle" type="button" onclick="toggleSidebar()">☰</button>
-          <div class="chat-title" id="chatTitle">Pilih Grup</div>
-          <div class="chat-subtitle" id="chatSubtitle">Pilih room grup dari sidebar kiri untuk mulai chat.</div>
+          <span class="chat-title" id="chatTitle">Pilih Chat</span>
+          <div class="chat-subtitle" id="chatSubtitle">Pilih user untuk chat pribadi atau pilih grup.</div>
         </div>
 
         <div class="status" id="statusText">Menghubungkan...</div>
       </div>
 
       <div class="messages" id="messages">
-        <p class="empty">Pilih grup dulu.</p>
+        <p class="empty">Pilih chat dulu.</p>
       </div>
 
       <form class="chat-form" id="chatForm">
@@ -545,6 +565,7 @@
     const groupsList = document.getElementById("groupsList");
     const addGroupBox = document.getElementById("addGroupBox");
     const newGroupName = document.getElementById("newGroupName");
+    const searchInput = document.getElementById("searchInput");
 
     const chatTitle = document.getElementById("chatTitle");
     const chatSubtitle = document.getElementById("chatSubtitle");
@@ -555,11 +576,17 @@
     const sidebar = document.getElementById("sidebar");
 
     let currentUser = null;
+    let currentTargetUser = null;
     let currentGroup = null;
+    let currentMode = "private";
+    let activeTab = "users";
+
+    let allUsers = [];
+    let visibleUsers = [];
     let allGroups = [];
     let realtimeStarted = false;
 
-    const savedUser = localStorage.getItem("forum_user_v2");
+    const savedUser = localStorage.getItem("forum_user_v3");
     if (savedUser) {
       currentUser = JSON.parse(savedUser);
       openApp();
@@ -585,6 +612,14 @@
       if (!currentUser) return false;
       const role = String(currentUser.role || "").toLowerCase();
       return role === "admin" || role === "leader";
+    }
+
+    function makeConversationKey(userA, userB) {
+      const ids = [Number(userA), Number(userB)].sort(function(a, b) {
+        return a - b;
+      });
+
+      return ids[0] + "_" + ids[1];
     }
 
     loginForm.addEventListener("submit", async function(e) {
@@ -618,7 +653,7 @@
       }
 
       currentUser = data;
-      localStorage.setItem("forum_user_v2", JSON.stringify(currentUser));
+      localStorage.setItem("forum_user_v3", JSON.stringify(currentUser));
       openApp();
     });
 
@@ -635,13 +670,11 @@
       await loadGroups();
       startRealtime();
 
-      if (allGroups.length > 0) {
-        selectGroup(allGroups[0].id);
-      }
+      switchTab("users");
     }
 
     function logout() {
-      localStorage.removeItem("forum_user_v2");
+      localStorage.removeItem("forum_user_v3");
       currentUser = null;
       location.reload();
     }
@@ -651,16 +684,33 @@
     }
 
     function switchTab(tab) {
+      activeTab = tab;
+      searchInput.value = "";
+
       if (tab === "users") {
         usersPanel.style.display = "block";
         groupsPanel.style.display = "none";
         usersTabBtn.classList.add("active");
         groupsTabBtn.classList.remove("active");
+        searchInput.placeholder = "Cari nama user...";
+        addGroupBox.classList.remove("show");
+        renderUsers();
       } else {
         usersPanel.style.display = "none";
         groupsPanel.style.display = "block";
         usersTabBtn.classList.remove("active");
         groupsTabBtn.classList.add("active");
+        searchInput.placeholder = "Cari nama grup...";
+        addGroupBox.classList.toggle("show", canManageGroups());
+        renderGroups();
+      }
+    }
+
+    function handleSearch() {
+      if (activeTab === "users") {
+        renderUsers();
+      } else {
+        renderGroups();
       }
     }
 
@@ -668,6 +718,7 @@
       const { data, error } = await supabaseClient
         .from("users")
         .select("id, username, display_name, role")
+        .neq("id", currentUser.id)
         .order("display_name", { ascending: true });
 
       if (error) {
@@ -675,15 +726,77 @@
         return;
       }
 
+      allUsers = data || [];
+      await loadVisibleUsersByConversation();
+      renderUsers();
+    }
+
+    async function loadVisibleUsersByConversation() {
+      const role = String(currentUser.role || "").toLowerCase();
+
+      if (role === "admin" || role === "leader") {
+        visibleUsers = allUsers;
+        return;
+      }
+
+      const { data, error } = await supabaseClient
+        .from("private_messages")
+        .select("sender_id, receiver_id")
+        .or("sender_id.eq." + currentUser.id + ",receiver_id.eq." + currentUser.id);
+
+      if (error) {
+        visibleUsers = [];
+        return;
+      }
+
+      const userIds = new Set();
+
+      (data || []).forEach(function(msg) {
+        const otherId = msg.sender_id === currentUser.id ? msg.receiver_id : msg.sender_id;
+        userIds.add(otherId);
+      });
+
+      visibleUsers = allUsers.filter(function(user) {
+        return userIds.has(user.id);
+      });
+    }
+
+    function renderUsers() {
+      const keyword = searchInput.value.trim().toLowerCase();
+
+      const filtered = visibleUsers.filter(function(user) {
+        const text = (user.display_name + " " + user.username + " " + user.role).toLowerCase();
+        return text.includes(keyword);
+      });
+
       usersList.innerHTML = "";
 
-      data.forEach(function(user) {
+      if (filtered.length === 0) {
+        if (keyword) {
+          usersList.innerHTML = `<p class="empty">User tidak ditemukan.</p>`;
+        } else {
+          usersList.innerHTML = `<p class="empty">Belum ada percakapan pribadi.</p>`;
+        }
+        return;
+      }
+
+      filtered.forEach(function(user) {
         const div = document.createElement("div");
         div.className = "user-item";
+
+        if (currentTargetUser && currentTargetUser.id === user.id && currentMode === "private") {
+          div.classList.add("active");
+        }
+
+        div.onclick = function() {
+          selectUser(user.id);
+        };
+
         div.innerHTML = `
           <div class="item-name">${escapeHtml(user.display_name)}</div>
           <div class="item-meta">@${escapeHtml(user.username)} • ${escapeHtml(user.role)}</div>
         `;
+
         usersList.appendChild(div);
       });
     }
@@ -704,18 +817,24 @@
     }
 
     function renderGroups() {
+      const keyword = searchInput.value.trim().toLowerCase();
+
+      const filtered = allGroups.filter(function(group) {
+        return String(group.name || "").toLowerCase().includes(keyword);
+      });
+
       groupsList.innerHTML = "";
 
-      if (allGroups.length === 0) {
-        groupsList.innerHTML = `<p class="empty">Belum ada grup.</p>`;
+      if (filtered.length === 0) {
+        groupsList.innerHTML = `<p class="empty">Grup tidak ditemukan.</p>`;
         return;
       }
 
-      allGroups.forEach(function(group) {
+      filtered.forEach(function(group) {
         const div = document.createElement("div");
         div.className = "group-item";
 
-        if (currentGroup && currentGroup.id === group.id) {
+        if (currentGroup && currentGroup.id === group.id && currentMode === "group") {
           div.classList.add("active");
         }
 
@@ -767,6 +886,25 @@
       selectGroup(data.id);
     }
 
+    async function selectUser(userId) {
+      currentTargetUser = allUsers.find(function(user) {
+        return user.id === userId;
+      });
+
+      if (!currentTargetUser) return;
+
+      currentMode = "private";
+      currentGroup = null;
+
+      chatTitle.textContent = currentTargetUser.display_name;
+      chatSubtitle.textContent = "Chat pribadi dengan @" + currentTargetUser.username;
+
+      renderUsers();
+      sidebar.classList.remove("open");
+
+      await loadPrivateMessages();
+    }
+
     async function selectGroup(groupId) {
       currentGroup = allGroups.find(function(group) {
         return group.id === groupId;
@@ -774,17 +912,49 @@
 
       if (!currentGroup) return;
 
+      currentMode = "group";
+      currentTargetUser = null;
+
       chatTitle.textContent = "# " + currentGroup.name;
       chatSubtitle.textContent = "Room chat grup: " + currentGroup.name;
 
       renderGroups();
-      switchTab("groups");
       sidebar.classList.remove("open");
 
-      await loadMessages();
+      await loadGroupMessages();
     }
 
-    async function loadMessages() {
+    async function loadPrivateMessages() {
+      if (!currentTargetUser) {
+        messagesDiv.innerHTML = `<p class="empty">Pilih user dulu.</p>`;
+        return;
+      }
+
+      const conversationKey = makeConversationKey(currentUser.id, currentTargetUser.id);
+
+      const { data, error } = await supabaseClient
+        .from("private_messages")
+        .select("*")
+        .eq("conversation_key", conversationKey)
+        .order("created_at", { ascending: true })
+        .limit(200);
+
+      if (error) {
+        messagesDiv.innerHTML = `<p class="error">Gagal memuat pesan: ${escapeHtml(error.message)}</p>`;
+        return;
+      }
+
+      messagesDiv.innerHTML = "";
+
+      if (!data || data.length === 0) {
+        messagesDiv.innerHTML = `<p class="empty">Belum ada pesan pribadi.</p>`;
+        return;
+      }
+
+      data.forEach(renderMessage);
+    }
+
+    async function loadGroupMessages() {
       if (!currentGroup) {
         messagesDiv.innerHTML = `<p class="empty">Pilih grup dulu.</p>`;
         return;
@@ -838,14 +1008,21 @@
         return;
       }
 
+      const message = messageInput.value.trim();
+      if (!message) return;
+
+      if (currentMode === "group") {
+        await sendGroupMessage(message);
+      } else {
+        await sendPrivateMessage(message);
+      }
+    });
+
+    async function sendGroupMessage(message) {
       if (!currentGroup) {
         alert("Pilih grup dulu.");
         return;
       }
-
-      const message = messageInput.value.trim();
-
-      if (!message) return;
 
       messageInput.value = "";
 
@@ -862,16 +1039,49 @@
         ]);
 
       if (error) {
-        alert("Gagal mengirim pesan: " + error.message);
+        alert("Gagal mengirim pesan grup: " + error.message);
       }
-    });
+    }
+
+    async function sendPrivateMessage(message) {
+      if (!currentTargetUser) {
+        alert("Pilih user dulu.");
+        return;
+      }
+
+      messageInput.value = "";
+
+      const conversationKey = makeConversationKey(currentUser.id, currentTargetUser.id);
+
+      const { error } = await supabaseClient
+        .from("private_messages")
+        .insert([
+          {
+            conversation_key: conversationKey,
+            sender_id: currentUser.id,
+            receiver_id: currentTargetUser.id,
+            username: currentUser.username,
+            display_name: currentUser.display_name,
+            message: message
+          }
+        ]);
+
+      if (error) {
+        alert("Gagal mengirim pesan pribadi: " + error.message);
+      } else {
+        if (!visibleUsers.some(function(user) { return user.id === currentTargetUser.id; })) {
+          visibleUsers.push(currentTargetUser);
+          renderUsers();
+        }
+      }
+    }
 
     function startRealtime() {
       if (realtimeStarted) return;
       realtimeStarted = true;
 
       supabaseClient
-        .channel("forum-realtime")
+        .channel("forum-realtime-v3")
         .on(
           "postgres_changes",
           {
@@ -880,6 +1090,7 @@
             table: "messages"
           },
           function(payload) {
+            if (currentMode !== "group") return;
             if (!currentGroup) return;
             if (payload.new.group_id !== currentGroup.id) return;
 
@@ -887,6 +1098,40 @@
             if (emptyText) messagesDiv.innerHTML = "";
 
             renderMessage(payload.new);
+          }
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "private_messages"
+          },
+          async function(payload) {
+            const msg = payload.new;
+
+            if (msg.sender_id !== currentUser.id && msg.receiver_id !== currentUser.id) return;
+
+            const otherId = msg.sender_id === currentUser.id ? msg.receiver_id : msg.sender_id;
+            const otherUser = allUsers.find(function(user) {
+              return user.id === otherId;
+            });
+
+            if (otherUser && !visibleUsers.some(function(user) { return user.id === otherUser.id; })) {
+              visibleUsers.push(otherUser);
+              renderUsers();
+            }
+
+            if (currentMode !== "private") return;
+            if (!currentTargetUser) return;
+
+            const currentKey = makeConversationKey(currentUser.id, currentTargetUser.id);
+            if (msg.conversation_key !== currentKey) return;
+
+            const emptyText = messagesDiv.querySelector(".empty");
+            if (emptyText) messagesDiv.innerHTML = "";
+
+            renderMessage(msg);
           }
         )
         .on(
