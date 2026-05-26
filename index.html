@@ -2608,6 +2608,31 @@ function canManageGroups(){
       return `<div class="reaction-row">${chips}${addButton}</div>`;
     }
 
+    function redrawMessagesKeepScroll(){
+      if(!messagesDiv) return;
+
+      const oldScrollTop = messagesDiv.scrollTop;
+      const oldScrollHeight = messagesDiv.scrollHeight;
+
+      if(messageSearchInput && messageSearchInput.value.trim()){
+        filterCurrentMessages();
+      }else{
+        messagesDiv.innerHTML = "";
+
+        if(!currentMessagesCache || !currentMessagesCache.length){
+          messagesDiv.innerHTML = `<p class="empty">Belum ada pesan.</p>`;
+          return;
+        }
+
+        currentMessagesCache.forEach(renderMessage);
+      }
+
+      requestAnimationFrame(function(){
+        const newScrollHeight = messagesDiv.scrollHeight;
+        messagesDiv.scrollTop = oldScrollTop + (newScrollHeight - oldScrollHeight);
+      });
+    }
+
     function redrawMessagesFromCache(){
       if(!messagesDiv) return;
 
@@ -2697,7 +2722,7 @@ function canManageGroups(){
         }
 
         await loadReactionsForMessages(mode, currentMessagesCache || []);
-        redrawMessagesFromCache();
+        redrawMessagesKeepScroll();
       }catch(err){
         showToast("Gagal memberi reaksi: " + err.message, "error", "Gagal");
       }
@@ -2808,7 +2833,6 @@ function canManageGroups(){
         </div>
       `;
       messagesDiv.appendChild(div);
-      messagesDiv.scrollTop=messagesDiv.scrollHeight;
     }
 
     function findUserByMessage(data){
@@ -3449,6 +3473,7 @@ function canManageGroups(){
           if(currentMode==="group"&&currentGroup&&msg.group_id===currentGroup.id){
             const empty=messagesDiv.querySelector(".empty"); if(empty)messagesDiv.innerHTML="";
             renderMessage(msg);
+            messagesDiv.scrollTop=messagesDiv.scrollHeight;
           }else if(msg.username!==currentUser.username){
             const lastRead=getLastRead("group", msg.group_id);
             if(new Date(msg.created_at).getTime()>new Date(lastRead).getTime()){
@@ -3470,6 +3495,7 @@ function canManageGroups(){
           if(currentMode==="private"&&currentTargetUser&&msg.conversation_key===makeConversationKey(currentUser.id,currentTargetUser.id)){
             const empty=messagesDiv.querySelector(".empty"); if(empty)messagesDiv.innerHTML="";
             renderMessage(msg);
+            messagesDiv.scrollTop=messagesDiv.scrollHeight;
           }else if(msg.sender_id!==currentUser.id){
             const lastRead=getLastRead("private", otherId);
             if(new Date(msg.created_at).getTime()>new Date(lastRead).getTime()){
@@ -3491,12 +3517,12 @@ function canManageGroups(){
 
           if(isCurrentGroup){
             await loadReactionsForMessages("group", currentMessagesCache || []);
-            redrawMessagesFromCache();
+            redrawMessagesKeepScroll();
           }
 
           if(isCurrentPrivate){
             await loadReactionsForMessages("private", currentMessagesCache || []);
-            redrawMessagesFromCache();
+            redrawMessagesKeepScroll();
           }
         })
         .on("postgres_changes",{event:"UPDATE",schema:"public",table:"message_reactions"},async payload=>{
@@ -3507,12 +3533,12 @@ function canManageGroups(){
 
           if(isCurrentGroup){
             await loadReactionsForMessages("group", currentMessagesCache || []);
-            redrawMessagesFromCache();
+            redrawMessagesKeepScroll();
           }
 
           if(isCurrentPrivate){
             await loadReactionsForMessages("private", currentMessagesCache || []);
-            redrawMessagesFromCache();
+            redrawMessagesKeepScroll();
           }
         })
         .on("postgres_changes",{event:"DELETE",schema:"public",table:"message_reactions"},async payload=>{
@@ -3523,12 +3549,12 @@ function canManageGroups(){
 
           if(isCurrentGroup){
             await loadReactionsForMessages("group", currentMessagesCache || []);
-            redrawMessagesFromCache();
+            redrawMessagesKeepScroll();
           }
 
           if(isCurrentPrivate){
             await loadReactionsForMessages("private", currentMessagesCache || []);
-            redrawMessagesFromCache();
+            redrawMessagesKeepScroll();
           }
         })
         .on("postgres_changes",{event:"INSERT",schema:"public",table:"groups"},payload=>{
