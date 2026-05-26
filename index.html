@@ -1298,6 +1298,123 @@
   }
 </style>
 
+
+<style id="message-reactions-style">
+  .msg-bottom{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:10px;
+    margin-top:8px;
+    flex-wrap:wrap;
+  }
+
+  .msg-bottom .time{
+    margin-top:0 !important;
+  }
+
+  .reaction-row{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    flex-wrap:wrap;
+  }
+
+  .reaction-chip,
+  .reaction-add-btn{
+    border-radius:999px;
+    border:1px solid rgba(148,163,184,.18);
+    background:rgba(15,23,42,.42);
+    color:#e2e8f0;
+    min-height:28px;
+    padding:4px 9px;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-size:13px;
+    line-height:1;
+    transition:.16s ease;
+    backdrop-filter:blur(8px);
+  }
+
+  .reaction-chip:hover,
+  .reaction-add-btn:hover{
+    transform:translateY(-1px);
+    background:rgba(30,41,59,.75);
+    border-color:rgba(56,189,248,.28);
+  }
+
+  .reaction-chip.me{
+    background:rgba(34,197,94,.12);
+    border-color:rgba(34,197,94,.35);
+    color:#dcfce7;
+  }
+
+  .reaction-chip .count{
+    font-size:11px;
+    color:#cbd5e1;
+    opacity:.9;
+    font-weight:bold;
+  }
+
+  .reaction-add-btn{
+    padding:4px 8px;
+    color:#93c5fd;
+  }
+
+  .reaction-picker-float{
+    position:fixed;
+    display:none;
+    align-items:center;
+    gap:6px;
+    padding:8px;
+    background:rgba(15,23,42,.97);
+    border:1px solid rgba(148,163,184,.22);
+    border-radius:16px;
+    box-shadow:0 18px 60px rgba(0,0,0,.45);
+    backdrop-filter:blur(16px);
+    z-index:15000;
+    animation:reactionPop .14s ease-out;
+  }
+
+  .reaction-picker-float.show{
+    display:flex;
+  }
+
+  .reaction-option{
+    width:36px;
+    height:36px;
+    border-radius:12px;
+    font-size:22px;
+    background:transparent;
+    transition:.14s ease;
+  }
+
+  .reaction-option:hover{
+    transform:scale(1.12);
+    background:rgba(56,189,248,.16);
+  }
+
+  @keyframes reactionPop{
+    from{opacity:0;transform:translateY(6px) scale(.96)}
+    to{opacity:1;transform:translateY(0) scale(1)}
+  }
+
+  @media(max-width:760px){
+    .reaction-chip,
+    .reaction-add-btn{
+      min-height:26px;
+      padding:4px 8px;
+      font-size:12px;
+    }
+    .reaction-option{
+      width:34px;
+      height:34px;
+      font-size:20px;
+    }
+  }
+</style>
+
 </head>
 
 <body>
@@ -1554,6 +1671,16 @@
   </div>
 
 
+
+  <div class="reaction-picker-float" id="reactionPickerFloat">
+    <button type="button" class="reaction-option" onclick="selectReaction('👍')">👍</button>
+    <button type="button" class="reaction-option" onclick="selectReaction('😂')">😂</button>
+    <button type="button" class="reaction-option" onclick="selectReaction('❤️')">❤️</button>
+    <button type="button" class="reaction-option" onclick="selectReaction('😮')">😮</button>
+    <button type="button" class="reaction-option" onclick="selectReaction('😢')">😢</button>
+    <button type="button" class="reaction-option" onclick="selectReaction('🔥')">🔥</button>
+  </div>
+
   <script>
     const SUPABASE_URL = "https://wbzxsvhlhbzusyzbjamp.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_55Jwsh0iRWj-BUAvds_MOQ_NEkwcU0p";
@@ -1569,6 +1696,7 @@
     const chatTitle = document.getElementById("chatTitle"), chatSubtitle = document.getElementById("chatSubtitle"), messagesDiv = document.getElementById("messages"), chatForm = document.getElementById("chatForm"), messageInput = document.getElementById("messageInput"), statusText = document.getElementById("statusText"), sidebar = document.getElementById("sidebar");
     const inviteBtn = document.getElementById("inviteBtn"), inviteModal = document.getElementById("inviteModal"), inviteSearchInput = document.getElementById("inviteSearchInput"), inviteUsersList = document.getElementById("inviteUsersList");
     const toastWrap = document.getElementById("toastWrap");
+    const reactionPickerFloat = document.getElementById("reactionPickerFloat");
     const chatTools = document.getElementById("chatTools"), messageSearchInput = document.getElementById("messageSearchInput"), groupSettingsBtn = document.getElementById("groupSettingsBtn");
     const groupSettingsModal = document.getElementById("groupSettingsModal"), settingsGroupAvatar = document.getElementById("settingsGroupAvatar"), settingsGroupAvatarLarge = document.getElementById("settingsGroupAvatarLarge"), settingsGroupNameSub = document.getElementById("settingsGroupNameSub"), groupNameInput = document.getElementById("groupNameInput"), groupAvatarInput = document.getElementById("groupAvatarInput");
     const groupTabSettings = document.getElementById("groupTabSettings"), groupTabMembers = document.getElementById("groupTabMembers"), groupTabAdd = document.getElementById("groupTabAdd");
@@ -1588,6 +1716,9 @@
     let unreadPrivate={}, unreadGroups={};
     let currentMessagesCache=[];
     let lastPrivatePreview={}, lastGroupPreview={};
+    let reactionsByKey={};
+    let activeReactionTarget=null;
+    const REACTION_OPTIONS=["👍","😂","❤️","😮","😢","🔥"];
     let selectedFile=null, replyTo=null, editingMessage=null;
 
     function hideLoading(){
@@ -2335,12 +2466,14 @@ function canManageGroups(){
       if(!currentTargetUser){messagesDiv.innerHTML=`<p class="empty">Pilih user dulu.</p>`;return}
       const key=makeConversationKey(currentUser.id,currentTargetUser.id);
       const {data,error}=await supabaseClient.from("private_messages").select("*").eq("conversation_key",key).order("created_at",{ascending:true}).limit(250);
+      await loadReactionsForMessages("private", data || []);
       renderMessageList(data,error,"Belum ada pesan pribadi.");
     }
 
     async function loadGroupMessages(){
       if(!currentGroup){messagesDiv.innerHTML=`<p class="empty">Pilih grup dulu.</p>`;return}
       const {data,error}=await supabaseClient.from("messages").select("*").eq("group_id",currentGroup.id).order("created_at",{ascending:true}).limit(250);
+      await loadReactionsForMessages("group", data || []);
       renderMessageList(data,error,"Belum ada pesan di grup ini.");
     }
 
@@ -2387,6 +2520,172 @@ function canManageGroups(){
       if(count <= 6) return "size-lg";
       if(count <= 10) return "size-md";
       return "size-sm";
+    }
+
+
+    function reactionKey(mode, id){
+      return mode + "-" + id;
+    }
+
+    function getReactionRows(mode, id){
+      return reactionsByKey[reactionKey(mode, id)] || [];
+    }
+
+    async function loadReactionsForMessages(mode, messages){
+      const ids=(messages || []).map(function(msg){ return msg.id; }).filter(Boolean);
+
+      // Reset cache only for current visible messages.
+      ids.forEach(function(id){
+        reactionsByKey[reactionKey(mode, id)] = [];
+      });
+
+      if(!ids.length) return;
+
+      let query = supabaseClient.from("message_reactions").select("*");
+
+      if(mode === "group"){
+        query = query.in("message_id", ids);
+      }else{
+        query = query.in("private_message_id", ids);
+      }
+
+      const {data,error}=await query.order("created_at",{ascending:true});
+      if(error) return;
+
+      (data || []).forEach(function(row){
+        const targetId = mode === "group" ? row.message_id : row.private_message_id;
+        const key = reactionKey(mode, targetId);
+        if(!reactionsByKey[key]) reactionsByKey[key] = [];
+        reactionsByKey[key].push(row);
+      });
+    }
+
+    function aggregateReactions(rows){
+      const map = new Map();
+
+      (rows || []).forEach(function(row){
+        const emoji = row.reaction;
+        if(!map.has(emoji)){
+          map.set(emoji, {emoji:emoji, count:0, mine:false});
+        }
+        const item = map.get(emoji);
+        item.count += 1;
+        if(row.user_id === currentUser.id) item.mine = true;
+      });
+
+      const ordered = [];
+      REACTION_OPTIONS.forEach(function(emoji){
+        if(map.has(emoji)) ordered.push(map.get(emoji));
+      });
+
+      map.forEach(function(value, key){
+        if(!REACTION_OPTIONS.includes(key)) ordered.push(value);
+      });
+
+      return ordered;
+    }
+
+    function renderReactionRow(mode, id, deleted){
+      if(deleted) return "";
+
+      const rows = getReactionRows(mode, id);
+      const aggregated = aggregateReactions(rows);
+
+      const chips = aggregated.map(function(item){
+        return `<button type="button" class="reaction-chip ${item.mine ? "me" : ""}" onclick="toggleReaction('${mode}', ${id}, '${item.emoji.replace(/'/g,"\\'")}')">${item.emoji}<span class="count">${item.count}</span></button>`;
+      }).join("");
+
+      return `<div class="reaction-row">${chips}<button type="button" class="reaction-add-btn" onclick="openReactionPicker('${mode}', ${id}, event)">➕</button></div>`;
+    }
+
+    function redrawMessagesFromCache(){
+      if(!messagesDiv) return;
+
+      if(messageSearchInput && messageSearchInput.value.trim()){
+        filterCurrentMessages();
+        return;
+      }
+
+      messagesDiv.innerHTML = "";
+      if(!currentMessagesCache || !currentMessagesCache.length){
+        messagesDiv.innerHTML = `<p class="empty">Belum ada pesan.</p>`;
+        return;
+      }
+
+      currentMessagesCache.forEach(renderMessage);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    function openReactionPicker(mode, id, ev){
+      if(!reactionPickerFloat) return;
+
+      activeReactionTarget = {mode:mode, id:id};
+
+      const rect = ev.currentTarget.getBoundingClientRect();
+      const pickerWidth = 280;
+      const left = Math.max(12, Math.min(window.innerWidth - pickerWidth - 12, rect.left - 10));
+      const top = Math.max(12, rect.top - 58);
+
+      reactionPickerFloat.style.left = left + "px";
+      reactionPickerFloat.style.top = top + "px";
+      reactionPickerFloat.classList.add("show");
+    }
+
+    function closeReactionPicker(){
+      if(reactionPickerFloat) reactionPickerFloat.classList.remove("show");
+      activeReactionTarget = null;
+    }
+
+    async function selectReaction(emoji){
+      if(!activeReactionTarget) return;
+      await toggleReaction(activeReactionTarget.mode, activeReactionTarget.id, emoji);
+      closeReactionPicker();
+    }
+
+    async function toggleReaction(mode, id, emoji){
+      if(!currentUser) return;
+
+      try{
+        let query = supabaseClient.from("message_reactions").select("*").eq("user_id", currentUser.id);
+
+        if(mode === "group"){
+          query = query.eq("message_id", id);
+        }else{
+          query = query.eq("private_message_id", id);
+        }
+
+        const {data:existing,error:findError}=await query.limit(1);
+        if(findError) throw findError;
+
+        const found = existing && existing[0];
+
+        if(found){
+          if(found.reaction === emoji){
+            const {error:deleteError}=await supabaseClient.from("message_reactions").delete().eq("id", found.id);
+            if(deleteError) throw deleteError;
+          }else{
+            const {error:updateError}=await supabaseClient.from("message_reactions").update({reaction:emoji}).eq("id", found.id);
+            if(updateError) throw updateError;
+          }
+        }else{
+          const payload = {
+            user_id: currentUser.id,
+            username: currentUser.username,
+            display_name: currentUser.display_name,
+            reaction: emoji,
+            message_id: mode === "group" ? id : null,
+            private_message_id: mode === "private" ? id : null
+          };
+
+          const {error:insertError}=await supabaseClient.from("message_reactions").insert([payload]);
+          if(insertError) throw insertError;
+        }
+
+        await loadReactionsForMessages(mode, currentMessagesCache || []);
+        redrawMessagesFromCache();
+      }catch(err){
+        showToast("Gagal memberi reaksi: " + err.message, "error", "Gagal");
+      }
     }
 
     function renderMessageList(data,error,emptyText){
@@ -2466,6 +2765,7 @@ function canManageGroups(){
       const edited=data.edited_at&&!deleted?" • diedit":"";
       const emojiOnly = !deleted && isEmojiOnlyMessage(data.message || "");
       const textClass = emojiOnly ? `text emoji-only ${emojiOnlySizeClass(data.message || "")}` : "text";
+      const reactionHtml = renderReactionRow(currentMode, data.id, deleted);
 
       div.innerHTML=`
         <div class="msg-top">
@@ -2486,7 +2786,10 @@ function canManageGroups(){
         ${replyHtml}
         <div class="${textClass}">${deleted?"<i>Pesan telah dihapus</i>":escapeHtml(data.message||"")}</div>
         ${fileHtml}
-        <div class="time">${formatTime(data.created_at)}${edited}</div>
+        <div class="msg-bottom">
+          ${reactionHtml}
+          <div class="time">${formatTime(data.created_at)}${edited}</div>
+        </div>
       `;
       messagesDiv.appendChild(div);
       messagesDiv.scrollTop=messagesDiv.scrollHeight;
@@ -3105,10 +3408,18 @@ function canManageGroups(){
         imageModal.classList.remove("show");
         imageModalImg.src = "";
       }
+      closeReactionPicker();
     }
 
     document.addEventListener("keydown", function(e){
       if(e.key === "Escape") closeAllModals();
+    });
+
+    document.addEventListener("click", function(e){
+      if(!reactionPickerFloat || !reactionPickerFloat.classList.contains("show")) return;
+      if(reactionPickerFloat.contains(e.target)) return;
+      if(e.target.closest && e.target.closest(".reaction-add-btn")) return;
+      closeReactionPicker();
     });
 
     function startRealtime(){
@@ -3154,6 +3465,55 @@ function canManageGroups(){
         .on("postgres_changes",{event:"UPDATE",schema:"public",table:"private_messages"},payload=>{
           const msg=payload.new;
           if(currentMode==="private"&&currentTargetUser&&msg.conversation_key===makeConversationKey(currentUser.id,currentTargetUser.id)) loadPrivateMessages();
+        })
+
+        .on("postgres_changes",{event:"INSERT",schema:"public",table:"message_reactions"},async payload=>{
+          const row = payload.new;
+
+          const isCurrentGroup = currentMode==="group" && currentGroup && row.message_id && currentMessagesCache.some(function(msg){ return msg.id === row.message_id; });
+          const isCurrentPrivate = currentMode==="private" && currentTargetUser && row.private_message_id && currentMessagesCache.some(function(msg){ return msg.id === row.private_message_id; });
+
+          if(isCurrentGroup){
+            await loadReactionsForMessages("group", currentMessagesCache || []);
+            redrawMessagesFromCache();
+          }
+
+          if(isCurrentPrivate){
+            await loadReactionsForMessages("private", currentMessagesCache || []);
+            redrawMessagesFromCache();
+          }
+        })
+        .on("postgres_changes",{event:"UPDATE",schema:"public",table:"message_reactions"},async payload=>{
+          const row = payload.new;
+
+          const isCurrentGroup = currentMode==="group" && currentGroup && row.message_id && currentMessagesCache.some(function(msg){ return msg.id === row.message_id; });
+          const isCurrentPrivate = currentMode==="private" && currentTargetUser && row.private_message_id && currentMessagesCache.some(function(msg){ return msg.id === row.private_message_id; });
+
+          if(isCurrentGroup){
+            await loadReactionsForMessages("group", currentMessagesCache || []);
+            redrawMessagesFromCache();
+          }
+
+          if(isCurrentPrivate){
+            await loadReactionsForMessages("private", currentMessagesCache || []);
+            redrawMessagesFromCache();
+          }
+        })
+        .on("postgres_changes",{event:"DELETE",schema:"public",table:"message_reactions"},async payload=>{
+          const row = payload.old || {};
+
+          const isCurrentGroup = currentMode==="group" && currentGroup && row.message_id && currentMessagesCache.some(function(msg){ return msg.id === row.message_id; });
+          const isCurrentPrivate = currentMode==="private" && currentTargetUser && row.private_message_id && currentMessagesCache.some(function(msg){ return msg.id === row.private_message_id; });
+
+          if(isCurrentGroup){
+            await loadReactionsForMessages("group", currentMessagesCache || []);
+            redrawMessagesFromCache();
+          }
+
+          if(isCurrentPrivate){
+            await loadReactionsForMessages("private", currentMessagesCache || []);
+            redrawMessagesFromCache();
+          }
         })
         .on("postgres_changes",{event:"INSERT",schema:"public",table:"groups"},payload=>{
           if(!allGroups.some(g=>g.id===payload.new.id)){allGroups.push(payload.new);renderGroups()}
