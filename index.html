@@ -2585,17 +2585,27 @@ function canManageGroups(){
       return ordered;
     }
 
-    function renderReactionRow(mode, id, deleted){
+    function renderReactionRow(mode, id, deleted, canReact=true){
       if(deleted) return "";
 
       const rows = getReactionRows(mode, id);
       const aggregated = aggregateReactions(rows);
 
       const chips = aggregated.map(function(item){
+        if(!canReact){
+          return `<span class="reaction-chip ${item.mine ? "me" : ""}">${item.emoji}<span class="count">${item.count}</span></span>`;
+        }
+
         return `<button type="button" class="reaction-chip ${item.mine ? "me" : ""}" onclick="toggleReaction('${mode}', ${id}, '${item.emoji.replace(/'/g,"\\'")}')">${item.emoji}<span class="count">${item.count}</span></button>`;
       }).join("");
 
-      return `<div class="reaction-row">${chips}<button type="button" class="reaction-add-btn" onclick="openReactionPicker('${mode}', ${id}, event)">➕</button></div>`;
+      const addButton = canReact
+        ? `<button type="button" class="reaction-add-btn" onclick="openReactionPicker('${mode}', ${id}, event)">➕</button>`
+        : "";
+
+      if(!chips && !addButton) return "";
+
+      return `<div class="reaction-row">${chips}${addButton}</div>`;
     }
 
     function redrawMessagesFromCache(){
@@ -2644,6 +2654,11 @@ function canManageGroups(){
 
     async function toggleReaction(mode, id, emoji){
       if(!currentUser) return;
+
+      const targetMsg = (currentMessagesCache || []).find(function(msg){ return msg.id === id; });
+      if(targetMsg && targetMsg.username === currentUser.username){
+        return;
+      }
 
       try{
         let query = supabaseClient.from("message_reactions").select("*").eq("user_id", currentUser.id);
@@ -2765,7 +2780,8 @@ function canManageGroups(){
       const edited=data.edited_at&&!deleted?" • diedit":"";
       const emojiOnly = !deleted && isEmojiOnlyMessage(data.message || "");
       const textClass = emojiOnly ? `text emoji-only ${emojiOnlySizeClass(data.message || "")}` : "text";
-      const reactionHtml = renderReactionRow(currentMode, data.id, deleted);
+      const canReactToMessage = currentUser && data.username !== currentUser.username;
+      const reactionHtml = renderReactionRow(currentMode, data.id, deleted, canReactToMessage);
 
       div.innerHTML=`
         <div class="msg-top">
