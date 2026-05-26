@@ -1416,48 +1416,63 @@
 </style>
 
 
-<style id="group-wallpaper-media-style">
-  .messages{
+<style id="user-wallpaper-global-style">
+  .app{
     position:relative;
     overflow:hidden;
+    background:transparent !important;
   }
 
-  .chat-wallpaper-media{
+  .user-wallpaper-layer{
     position:absolute;
     inset:0;
+    z-index:0;
+    pointer-events:none;
+    overflow:hidden;
+    background:
+      radial-gradient(circle at 16% 12%, rgba(34,197,94,.10), transparent 26%),
+      radial-gradient(circle at 84% 16%, rgba(56,189,248,.08), transparent 26%),
+      linear-gradient(135deg,#020617,#07111f);
+  }
+
+  .user-wallpaper-layer img,
+  .user-wallpaper-layer video{
     width:100%;
     height:100%;
     object-fit:cover;
-    opacity:.22;
-    filter:blur(0px) saturate(1.05);
-    pointer-events:none;
-    z-index:0;
+    opacity:.34;
+    filter:saturate(1.08) brightness(.85);
   }
 
-  .chat-wallpaper-overlay{
+  .user-wallpaper-layer::after{
+    content:"";
     position:absolute;
     inset:0;
-    pointer-events:none;
-    z-index:1;
     background:
-      radial-gradient(circle at 18% 12%, rgba(34,197,94,.10), transparent 30%),
-      linear-gradient(180deg, rgba(2,6,23,.62), rgba(2,6,23,.84));
+      radial-gradient(circle at 24% 10%, rgba(34,197,94,.10), transparent 26%),
+      linear-gradient(180deg, rgba(2,6,23,.55), rgba(2,6,23,.76));
   }
 
-  .messages > .message,
-  .messages > .empty,
-  .messages > .error{
+  .sidebar,
+  .main{
     position:relative;
-    z-index:2;
+    z-index:1;
+    background:rgba(2,6,23,.62) !important;
+    backdrop-filter:blur(10px);
   }
 
-  .group-item.has-media{
-    min-height:78px;
-    overflow:hidden;
-    background:rgba(15,23,42,.72) !important;
+  .chat-header,
+  .chat-form,
+  .composer-extra{
+    background:rgba(2,6,23,.70) !important;
+    backdrop-filter:blur(14px);
   }
 
-  .group-item-media{
+  .messages{
+    background:rgba(2,6,23,.18) !important;
+  }
+
+  .item-active-media{
     position:absolute;
     inset:0;
     width:100%;
@@ -1468,76 +1483,85 @@
     pointer-events:none;
   }
 
-  .group-item.has-media::after{
+  .user-item.active,
+  .group-item.active{
+    overflow:hidden;
+    min-height:74px;
+  }
+
+  .user-item.active::after,
+  .group-item.active::after{
     content:"";
     position:absolute;
     inset:0;
-    background:linear-gradient(90deg,rgba(2,6,23,.78),rgba(2,6,23,.36));
     z-index:1;
     pointer-events:none;
+    background:linear-gradient(90deg, rgba(2,6,23,.75), rgba(2,6,23,.35));
   }
 
-  .group-item.has-media .item-row,
-  .group-item.has-media .badge{
+  .user-item.active .item-row,
+  .group-item.active .item-row,
+  .user-item.active .badge,
+  .group-item.active .badge{
     position:relative;
     z-index:2;
   }
 
-  .group-item.has-media .item-name,
-  .group-item.has-media .item-meta,
-  .group-item.has-media .item-preview{
+  .user-item.active .item-name,
+  .group-item.active .item-name,
+  .user-item.active .item-preview,
+  .group-item.active .item-preview{
     text-shadow:0 2px 8px rgba(0,0,0,.75);
   }
 
-  .settings-url-box{
-    margin-top:14px;
+  .profile-wallpaper-box{
+    margin-top:12px;
     padding:12px;
     border-radius:14px;
-    border:1px solid rgba(148,163,184,.14);
     background:rgba(15,23,42,.48);
+    border:1px solid rgba(148,163,184,.14);
   }
 
-  .settings-url-row{
+  .profile-wallpaper-box label{
+    display:block;
+    margin-bottom:7px;
+  }
+
+  .profile-wallpaper-note{
+    font-size:11.5px;
+    color:#94a3b8;
+    line-height:1.45;
+    margin-top:7px;
+  }
+
+  .profile-url-actions{
     display:flex;
     gap:8px;
-    align-items:center;
-  }
-
-  .settings-url-input{
-    flex:1;
-    min-width:0;
-    background:#1e293b;
-    color:#fff;
-    border:1px solid rgba(148,163,184,.16);
-    border-radius:12px;
-    padding:11px 12px;
-  }
-
-  .settings-url-help{
-    color:#94a3b8;
-    font-size:11.5px;
-    line-height:1.4;
     margin-top:8px;
   }
 
-  .clear-url-btn{
-    background:rgba(239,68,68,.12);
-    color:#fecaca;
-    border:1px solid rgba(239,68,68,.34);
-    border-radius:12px;
-    padding:10px 11px;
-    white-space:nowrap;
+  .profile-url-actions button{
+    flex:1;
+    min-height:38px;
+    border-radius:11px;
+    font-size:12px;
   }
 
-  .clear-url-btn:hover{
-    background:rgba(239,68,68,.20);
+  .profile-url-save{
+    background:linear-gradient(135deg,#22c55e,#16a34a);
     color:#fff;
   }
 
+  .profile-url-clear{
+    background:rgba(239,68,68,.12);
+    color:#fecaca;
+    border:1px solid rgba(239,68,68,.35);
+  }
+
   @media(max-width:760px){
-    .settings-url-row{
-      flex-direction:column;
-      align-items:stretch;
+    .user-wallpaper-layer img,
+    .user-wallpaper-layer video{
+      opacity:.28;
     }
   }
 </style>
@@ -1582,6 +1606,7 @@
   </div>
 
   <div class="app" id="app">
+    <div class="user-wallpaper-layer" id="userWallpaperLayer"></div>
     <aside class="sidebar" id="sidebar">
       <div class="profile">
         <div class="profile-top">
@@ -1717,28 +1742,8 @@
           <div>
             <div style="font-size:13px;color:#cbd5e1;margin-bottom:8px;">Gambar profil saat ini</div>
             <input type="file" id="groupAvatarInput" accept="image/*" style="display:none" onchange="saveGroupAvatar()">
-            <button class="blue-btn" onclick="document.getElementById('groupAvatarInput').click()">Upload Gambar</button>
+            <button class="blue-btn" onclick="document.getElementById('groupAvatarInput').click()">Ubah Gambar</button>
           </div>
-        </div>
-
-        <div class="settings-url-box">
-          <label>Link Profil/Media Grup</label>
-          <div class="settings-url-row">
-            <input class="settings-url-input" id="groupAvatarUrlInput" type="text" placeholder="Link gambar / GIF / video untuk tampilan sidebar">
-            <button class="blue-btn" onclick="saveGroupAvatarUrl()">Simpan</button>
-            <button class="clear-url-btn" onclick="clearGroupAvatarUrl()">Hapus</button>
-          </div>
-          <div class="settings-url-help">Bisa pakai link JPG, PNG, GIF, WEBP, MP4, WEBM. Kalau video, sidebar akan menampilkan video otomatis.</div>
-        </div>
-
-        <div class="settings-url-box">
-          <label>Wallpaper Chat Grup</label>
-          <div class="settings-url-row">
-            <input class="settings-url-input" id="groupWallpaperUrlInput" type="text" placeholder="Link gambar / GIF / video untuk background chat">
-            <button class="blue-btn" onclick="saveGroupWallpaperUrl()">Simpan</button>
-            <button class="clear-url-btn" onclick="clearGroupWallpaperUrl()">Hapus</button>
-          </div>
-          <div class="settings-url-help">Wallpaper hanya tampil saat membuka grup ini. Mendukung gambar, GIF, dan video seperti MP4/WEBM.</div>
         </div>
 
         <div class="settings-section-title">Informasi Grup</div>
@@ -1779,6 +1784,27 @@
       </div>
       <input class="modal-input" type="file" id="settingsAvatarFile" accept="image/*">
       <div class="profile-settings-note">Pilih foto baru lalu klik Simpan Profil. Gunakan Hapus Foto Profil untuk kembali ke avatar default.</div>
+
+      <div class="profile-wallpaper-box">
+        <label>Link Background Tampilan</label>
+        <input class="modal-input" type="text" id="settingsBackgroundUrl" placeholder="Link gambar / GIF / video untuk background forum">
+        <div class="profile-url-actions">
+          <button class="profile-url-save" type="button" onclick="saveUserBackgroundUrl()">Simpan Background</button>
+          <button class="profile-url-clear" type="button" onclick="clearUserBackgroundUrl()">Hapus</button>
+        </div>
+        <div class="profile-wallpaper-note">Berlaku untuk seluruh tampilan akun kamu. Bisa JPG, PNG, GIF, WEBP, MP4, WEBM.</div>
+      </div>
+
+      <div class="profile-wallpaper-box">
+        <label>Link Media Sidebar Aktif</label>
+        <input class="modal-input" type="text" id="settingsSidebarMediaUrl" placeholder="Link gambar / GIF / video untuk chat yang sedang dipilih">
+        <div class="profile-url-actions">
+          <button class="profile-url-save" type="button" onclick="saveUserSidebarMediaUrl()">Simpan Sidebar</button>
+          <button class="profile-url-clear" type="button" onclick="clearUserSidebarMediaUrl()">Hapus</button>
+        </div>
+        <div class="profile-wallpaper-note">Media ini muncul pada user/grup yang sedang kamu pilih di sidebar.</div>
+      </div>
+
       <div class="profile-settings-actions">
         <button class="modal-save" onclick="saveProfileSettings()">✓ Simpan Profil</button>
         <button class="modal-danger" id="deleteProfileAvatarBtn" onclick="deleteProfileAvatar()">🗑 Hapus Foto Profil</button>
@@ -1843,16 +1869,17 @@
     const chatTitle = document.getElementById("chatTitle"), chatSubtitle = document.getElementById("chatSubtitle"), messagesDiv = document.getElementById("messages"), chatForm = document.getElementById("chatForm"), messageInput = document.getElementById("messageInput"), statusText = document.getElementById("statusText"), sidebar = document.getElementById("sidebar");
     const inviteBtn = document.getElementById("inviteBtn"), inviteModal = document.getElementById("inviteModal"), inviteSearchInput = document.getElementById("inviteSearchInput"), inviteUsersList = document.getElementById("inviteUsersList");
     const toastWrap = document.getElementById("toastWrap");
+    const userWallpaperLayer = document.getElementById("userWallpaperLayer");
     const reactionPickerFloat = document.getElementById("reactionPickerFloat");
     const chatTools = document.getElementById("chatTools"), messageSearchInput = document.getElementById("messageSearchInput"), groupSettingsBtn = document.getElementById("groupSettingsBtn");
-    const groupSettingsModal = document.getElementById("groupSettingsModal"), settingsGroupAvatar = document.getElementById("settingsGroupAvatar"), settingsGroupAvatarLarge = document.getElementById("settingsGroupAvatarLarge"), settingsGroupNameSub = document.getElementById("settingsGroupNameSub"), groupNameInput = document.getElementById("groupNameInput"), groupAvatarInput = document.getElementById("groupAvatarInput"), groupAvatarUrlInput = document.getElementById("groupAvatarUrlInput"), groupWallpaperUrlInput = document.getElementById("groupWallpaperUrlInput");
+    const groupSettingsModal = document.getElementById("groupSettingsModal"), settingsGroupAvatar = document.getElementById("settingsGroupAvatar"), settingsGroupAvatarLarge = document.getElementById("settingsGroupAvatarLarge"), settingsGroupNameSub = document.getElementById("settingsGroupNameSub"), groupNameInput = document.getElementById("groupNameInput"), groupAvatarInput = document.getElementById("groupAvatarInput");
     const groupTabSettings = document.getElementById("groupTabSettings"), groupTabMembers = document.getElementById("groupTabMembers"), groupTabAdd = document.getElementById("groupTabAdd");
     const groupPanelSettings = document.getElementById("groupPanelSettings"), groupPanelMembers = document.getElementById("groupPanelMembers"), groupPanelAdd = document.getElementById("groupPanelAdd");
     const groupMembersList = document.getElementById("groupMembersList"), groupAddSearchInput = document.getElementById("groupAddSearchInput"), groupAddUsersList = document.getElementById("groupAddUsersList");
     const fileInput = document.getElementById("fileInput"), filePreview = document.getElementById("filePreview"), filePreviewText = document.getElementById("filePreviewText");
     const emojiPicker = document.getElementById("emojiPicker"), emojiGrid = document.getElementById("emojiGrid"), emojiSearchInput = document.getElementById("emojiSearchInput");
     const myAvatar = document.getElementById("myAvatar");
-    const profileSettingsModal = document.getElementById("profileSettingsModal"), settingsDisplayName = document.getElementById("settingsDisplayName"), settingsPassword = document.getElementById("settingsPassword"), settingsAvatarFile = document.getElementById("settingsAvatarFile"), deleteProfileAvatarBtn = document.getElementById("deleteProfileAvatarBtn"), profileAvatarStatus = document.getElementById("profileAvatarStatus");
+    const profileSettingsModal = document.getElementById("profileSettingsModal"), settingsDisplayName = document.getElementById("settingsDisplayName"), settingsPassword = document.getElementById("settingsPassword"), settingsAvatarFile = document.getElementById("settingsAvatarFile"), deleteProfileAvatarBtn = document.getElementById("deleteProfileAvatarBtn"), profileAvatarStatus = document.getElementById("profileAvatarStatus"), settingsBackgroundUrl = document.getElementById("settingsBackgroundUrl"), settingsSidebarMediaUrl = document.getElementById("settingsSidebarMediaUrl");
     const userProfileModal = document.getElementById("userProfileModal"), popupAvatar = document.getElementById("popupAvatar"), popupName = document.getElementById("popupName"), popupUsername = document.getElementById("popupUsername"), popupRole = document.getElementById("popupRole"), popupStatus = document.getElementById("popupStatus");
     const imageModal = document.getElementById("imageModal"), imageModalImg = document.getElementById("imageModalImg");
     const replyPreview = document.getElementById("replyPreview"), replyPreviewText = document.getElementById("replyPreviewText");
@@ -2037,24 +2064,29 @@ function canManageGroups(){
       return !!url && /\.(png|jpe?g|gif|webp|svg|mp4|webm|ogg|mov)(\?.*)?$/i.test(String(url || ""));
     }
 
-    function groupMediaHtml(group, className){
-      const url = group && group.avatar_url ? group.avatar_url : "";
+    function mediaTagHtml(url, className, altText="Media"){
       if(!url)return "";
-      const safeUrl = escapeHtml(url);
+      const safeUrl=escapeHtml(url);
       if(isVideoUrl(url)){
         return `<video class="${className}" src="${safeUrl}" autoplay muted loop playsinline></video>`;
       }
-      return `<img class="${className}" src="${safeUrl}" alt="${escapeHtml(group.name || "Group")}">`;
+      return `<img class="${className}" src="${safeUrl}" alt="${escapeHtml(altText)}">`;
     }
 
-    function wallpaperMediaHtml(group){
-      const url = group && group.background_url ? group.background_url : "";
-      if(!url)return "";
-      const safeUrl = escapeHtml(url);
-      if(isVideoUrl(url)){
-        return `<video class="chat-wallpaper-media" src="${safeUrl}" autoplay muted loop playsinline></video><div class="chat-wallpaper-overlay"></div>`;
+    function applyUserWallpaper(){
+      if(!userWallpaperLayer || !currentUser)return;
+      const url=currentUser.background_url || "";
+      if(!url){
+        userWallpaperLayer.innerHTML="";
+        return;
       }
-      return `<img class="chat-wallpaper-media" src="${safeUrl}" alt="Wallpaper"><div class="chat-wallpaper-overlay"></div>`;
+      userWallpaperLayer.innerHTML=mediaTagHtml(url, "user-wallpaper-media", "Wallpaper");
+    }
+
+    function selectedSidebarMediaHtml(){
+      const url=currentUser && currentUser.sidebar_media_url ? currentUser.sidebar_media_url : "";
+      if(!url)return "";
+      return mediaTagHtml(url, "item-active-media", "Selected chat media");
     }
 
     function displayReplyName(name){
@@ -2152,7 +2184,7 @@ function canManageGroups(){
       e.preventDefault(); loginError.textContent="";
       const username=loginUsername.value.trim(), password=loginPassword.value.trim();
       if(!username||!password){loginError.textContent="Username dan password wajib diisi.";return}
-      const {data,error}=await supabaseClient.from("users").select("id,username,password,display_name,role,is_online,last_seen,avatar_url").eq("username",username).eq("password",password).maybeSingle();
+      const {data,error}=await supabaseClient.from("users").select("id,username,password,display_name,role,is_online,last_seen,avatar_url,background_url,sidebar_media_url").eq("username",username).eq("password",password).maybeSingle();
       if(error){loginError.textContent="Gagal login: "+error.message;return}
       if(!data){loginError.textContent="Username atau password salah.";return}
       currentUser=data; localStorage.setItem("forum_user_pro",JSON.stringify(currentUser)); openApp();
@@ -2166,7 +2198,7 @@ function canManageGroups(){
 
       const { data, error } = await supabaseClient
         .from("users")
-        .select("id,username,password,display_name,role,is_online,last_seen,avatar_url")
+        .select("id,username,password,display_name,role,is_online,last_seen,avatar_url,background_url,sidebar_media_url")
         .eq("id", currentUser.id)
         .maybeSingle();
 
@@ -2189,6 +2221,7 @@ function canManageGroups(){
       profileName.textContent = currentUser.display_name || currentUser.username || "User";
       profileRole.textContent = currentUser.role || "Member";
       myAvatar.src = avatarSrc(currentUser);
+      applyUserWallpaper();
 
       statusText.textContent = "Online";
       statusText.classList.add("online");
@@ -2317,7 +2350,7 @@ function canManageGroups(){
     }
 
     async function loadUsers(){
-      const {data,error}=await supabaseClient.from("users").select("id,username,display_name,role,is_online,last_seen,avatar_url").neq("id",currentUser.id).order("display_name",{ascending:true});
+      const {data,error}=await supabaseClient.from("users").select("id,username,display_name,role,is_online,last_seen,avatar_url,background_url,sidebar_media_url").neq("id",currentUser.id).order("display_name",{ascending:true});
       if(error){usersList.innerHTML=`<p class="error">Gagal memuat user: ${escapeHtml(error.message)}</p>`;return}
       allUsers=data||[]; await loadVisibleUsersByConversation(); renderUsers();
     }
@@ -2468,7 +2501,8 @@ function canManageGroups(){
         div.onclick=()=>selectUser(user.id);
         const count=unreadPrivate[user.id]||0;
         const preview = lastPrivatePreview[user.id] || "";
-        div.innerHTML=`<div class="item-row">
+        const activeMedia = (currentTargetUser&&currentTargetUser.id===user.id&&currentMode==="private") ? selectedSidebarMediaHtml() : "";
+        div.innerHTML=`${activeMedia}<div class="item-row">
           <img class="item-avatar" src="${escapeHtml(avatarSrc(user, user.display_name))}" alt="${escapeHtml(user.display_name)}" />
           <div class="item-text">
             <div class="item-name">${escapeHtml(user.display_name)}</div>
@@ -2530,13 +2564,9 @@ function canManageGroups(){
         div.onclick=()=>selectGroup(group.id);
         const count=unreadGroups[group.id]||0;
         const preview = lastGroupPreview[group.id] || "";
-        if(group.avatar_url) div.classList.add("has-media");
-        const avatarNode = isVideoUrl(group.avatar_url)
-          ? `<video class="item-avatar" src="${escapeHtml(group.avatar_url)}" autoplay muted loop playsinline></video>`
-          : `<img class="item-avatar" src="${escapeHtml(groupAvatarSrc(group))}" alt="${escapeHtml(group.name)}" />`;
-        div.innerHTML=`${groupMediaHtml(group, "group-item-media")}
-        <div class="item-row">
-          ${avatarNode}
+        const activeMedia = (currentGroup&&currentGroup.id===group.id&&currentMode==="group") ? selectedSidebarMediaHtml() : "";
+        div.innerHTML=`${activeMedia}<div class="item-row">
+          <img class="item-avatar" src="${escapeHtml(groupAvatarSrc(group))}" alt="${escapeHtml(group.name)}" />
           <div class="item-text">
             <div class="item-name"># ${escapeHtml(group.name)}</div>
             <div class="item-meta">Room chat grup</div>
@@ -2921,12 +2951,8 @@ function canManageGroups(){
       }
 
       messagesDiv.innerHTML="";
-      if(currentMode === "group" && currentGroup && currentGroup.background_url){
-        messagesDiv.innerHTML = wallpaperMediaHtml(currentGroup);
-      }
-
       if(!data||!data.length){
-        messagesDiv.insertAdjacentHTML("beforeend", `<p class="empty">${emptyText}</p>`);
+        messagesDiv.innerHTML=`<p class="empty">${emptyText}</p>`;
         return;
       }
 
@@ -2962,12 +2988,9 @@ function canManageGroups(){
       });
 
       messagesDiv.innerHTML="";
-      if(currentMode === "group" && currentGroup && currentGroup.background_url){
-        messagesDiv.innerHTML = wallpaperMediaHtml(currentGroup);
-      }
 
       if(!filtered.length){
-        messagesDiv.insertAdjacentHTML("beforeend", `<p class="empty">Pesan tidak ditemukan.</p>`);
+        messagesDiv.innerHTML=`<p class="empty">Pesan tidak ditemukan.</p>`;
         return;
       }
 
@@ -3213,6 +3236,8 @@ function canManageGroups(){
       if(profileAvatarStatus){
         profileAvatarStatus.textContent = currentUser && currentUser.avatar_url ? "Terpasang" : "Default";
       }
+      if(settingsBackgroundUrl) settingsBackgroundUrl.value = currentUser.background_url || "";
+      if(settingsSidebarMediaUrl) settingsSidebarMediaUrl.value = currentUser.sidebar_media_url || "";
       profileSettingsModal.classList.add("show");
     }
 
@@ -3231,6 +3256,72 @@ function canManageGroups(){
     }
 
 
+
+    async function updateCurrentUserExtra(updateData, successMessage){
+      try{
+        const { data, error } = await supabaseClient
+          .from("users")
+          .update(updateData)
+          .eq("id", currentUser.id)
+          .select("id,username,password,display_name,role,is_online,last_seen,avatar_url,background_url,sidebar_media_url")
+          .single();
+
+        if(error) throw error;
+
+        currentUser = data;
+        localStorage.setItem("forum_user_pro", JSON.stringify(currentUser));
+        applyUserWallpaper();
+        renderUsers();
+        renderGroups();
+
+        showToast(successMessage, "success", "Berhasil");
+      }catch(err){
+        showToast("Gagal menyimpan: " + err.message, "error", "Gagal");
+      }
+    }
+
+    async function saveUserBackgroundUrl(){
+      const url=(settingsBackgroundUrl.value || "").trim();
+
+      if(!url){
+        showToast("Masukkan link background dulu.", "warn", "Perhatian");
+        return;
+      }
+
+      if(!isMediaUrl(url)){
+        showToast("Link harus gambar, GIF, atau video.", "warn", "Perhatian");
+        return;
+      }
+
+      await updateCurrentUserExtra({background_url:url}, "Background tampilan berhasil disimpan.");
+    }
+
+    async function clearUserBackgroundUrl(){
+      if(settingsBackgroundUrl) settingsBackgroundUrl.value="";
+      await updateCurrentUserExtra({background_url:null}, "Background tampilan berhasil dihapus.");
+    }
+
+    async function saveUserSidebarMediaUrl(){
+      const url=(settingsSidebarMediaUrl.value || "").trim();
+
+      if(!url){
+        showToast("Masukkan link media sidebar dulu.", "warn", "Perhatian");
+        return;
+      }
+
+      if(!isMediaUrl(url)){
+        showToast("Link harus gambar, GIF, atau video.", "warn", "Perhatian");
+        return;
+      }
+
+      await updateCurrentUserExtra({sidebar_media_url:url}, "Media sidebar aktif berhasil disimpan.");
+    }
+
+    async function clearUserSidebarMediaUrl(){
+      if(settingsSidebarMediaUrl) settingsSidebarMediaUrl.value="";
+      await updateCurrentUserExtra({sidebar_media_url:null}, "Media sidebar aktif berhasil dihapus.");
+    }
+
     async function deleteProfileAvatar(){
       if(!currentUser) return;
 
@@ -3239,7 +3330,7 @@ function canManageGroups(){
           .from("users")
           .update({ avatar_url: null })
           .eq("id", currentUser.id)
-          .select("id,username,password,display_name,role,is_online,last_seen,avatar_url")
+          .select("id,username,password,display_name,role,is_online,last_seen,avatar_url,background_url,sidebar_media_url")
           .single();
 
         if(error) throw error;
@@ -3250,6 +3341,7 @@ function canManageGroups(){
         profileName.textContent = currentUser.display_name;
         profileRole.textContent = currentUser.role;
         myAvatar.src = avatarSrc(currentUser);
+        applyUserWallpaper();
         settingsAvatarFile.value = "";
 
         if(deleteProfileAvatarBtn){
@@ -3295,7 +3387,7 @@ function canManageGroups(){
           .from("users")
           .update(updateData)
           .eq("id", currentUser.id)
-          .select("id,username,password,display_name,role,is_online,last_seen,avatar_url")
+          .select("id,username,password,display_name,role,is_online,last_seen,avatar_url,background_url,sidebar_media_url")
           .single();
 
         if(error) throw error;
@@ -3455,8 +3547,6 @@ function canManageGroups(){
       settingsGroupAvatarLarge.src = groupAvatarSrc(currentGroup);
       settingsGroupNameSub.textContent = currentGroup.name;
       groupNameInput.value = currentGroup.name || "";
-      if(groupAvatarUrlInput) groupAvatarUrlInput.value = currentGroup.avatar_url || "";
-      if(groupWallpaperUrlInput) groupWallpaperUrlInput.value = currentGroup.background_url || "";
       groupSettingsModal.classList.add("show");
       switchGroupSettingsTab("settings");
       loadCurrentGroupMembers().then(renderGroupMembers);
@@ -3497,133 +3587,6 @@ function canManageGroups(){
       settingsGroupNameSub.textContent = currentGroup.name;
       renderGroups();
       showToast("Nama grup berhasil diubah.", "success", "Berhasil");
-    }
-
-
-    async function saveGroupAvatarUrl(){
-      if(!currentGroup)return;
-      const url = (groupAvatarUrlInput.value || "").trim();
-
-      if(!url){
-        showToast("Masukkan link media grup dulu.", "warn", "Perhatian");
-        return;
-      }
-
-      if(!isMediaUrl(url)){
-        showToast("Link harus gambar, GIF, atau video.", "warn", "Perhatian");
-        return;
-      }
-
-      const {data,error}=await supabaseClient
-        .from("groups")
-        .update({avatar_url:url})
-        .eq("id", currentGroup.id)
-        .select()
-        .single();
-
-      if(error){
-        showToast("Gagal menyimpan media grup: " + error.message, "error", "Gagal");
-        return;
-      }
-
-      currentGroup = {...currentGroup, ...data};
-      allGroups = allGroups.map(function(group){
-        return group.id === currentGroup.id ? currentGroup : group;
-      });
-
-      settingsGroupAvatar.src = groupAvatarSrc(currentGroup);
-      settingsGroupAvatarLarge.src = groupAvatarSrc(currentGroup);
-      renderGroups();
-      showToast("Media grup berhasil disimpan.", "success", "Berhasil");
-    }
-
-    async function clearGroupAvatarUrl(){
-      if(!currentGroup)return;
-
-      const {data,error}=await supabaseClient
-        .from("groups")
-        .update({avatar_url:null})
-        .eq("id", currentGroup.id)
-        .select()
-        .single();
-
-      if(error){
-        showToast("Gagal menghapus media grup: " + error.message, "error", "Gagal");
-        return;
-      }
-
-      currentGroup = {...currentGroup, ...data};
-      allGroups = allGroups.map(function(group){
-        return group.id === currentGroup.id ? currentGroup : group;
-      });
-
-      if(groupAvatarUrlInput) groupAvatarUrlInput.value = "";
-      settingsGroupAvatar.src = groupAvatarSrc(currentGroup);
-      settingsGroupAvatarLarge.src = groupAvatarSrc(currentGroup);
-      renderGroups();
-      showToast("Media grup berhasil dihapus.", "success", "Berhasil");
-    }
-
-    async function saveGroupWallpaperUrl(){
-      if(!currentGroup)return;
-      const url = (groupWallpaperUrlInput.value || "").trim();
-
-      if(!url){
-        showToast("Masukkan link wallpaper dulu.", "warn", "Perhatian");
-        return;
-      }
-
-      if(!isMediaUrl(url)){
-        showToast("Link wallpaper harus gambar, GIF, atau video.", "warn", "Perhatian");
-        return;
-      }
-
-      const {data,error}=await supabaseClient
-        .from("groups")
-        .update({background_url:url})
-        .eq("id", currentGroup.id)
-        .select()
-        .single();
-
-      if(error){
-        showToast("Gagal menyimpan wallpaper: " + error.message, "error", "Gagal");
-        return;
-      }
-
-      currentGroup = {...currentGroup, ...data};
-      allGroups = allGroups.map(function(group){
-        return group.id === currentGroup.id ? currentGroup : group;
-      });
-
-      await loadGroupMessages();
-      renderGroups();
-      showToast("Wallpaper grup berhasil disimpan.", "success", "Berhasil");
-    }
-
-    async function clearGroupWallpaperUrl(){
-      if(!currentGroup)return;
-
-      const {data,error}=await supabaseClient
-        .from("groups")
-        .update({background_url:null})
-        .eq("id", currentGroup.id)
-        .select()
-        .single();
-
-      if(error){
-        showToast("Gagal menghapus wallpaper: " + error.message, "error", "Gagal");
-        return;
-      }
-
-      currentGroup = {...currentGroup, ...data};
-      allGroups = allGroups.map(function(group){
-        return group.id === currentGroup.id ? currentGroup : group;
-      });
-
-      if(groupWallpaperUrlInput) groupWallpaperUrlInput.value = "";
-      await loadGroupMessages();
-      renderGroups();
-      showToast("Wallpaper grup berhasil dihapus.", "success", "Berhasil");
     }
 
     async function saveGroupAvatar(){
@@ -3786,13 +3749,7 @@ function canManageGroups(){
           renderGroups();
 
           if(currentMode==="group"&&currentGroup&&msg.group_id===currentGroup.id){
-            const empty=messagesDiv.querySelector(".empty");
-            if(empty){
-              messagesDiv.innerHTML="";
-              if(currentMode === "group" && currentGroup && currentGroup.background_url){
-                messagesDiv.innerHTML = wallpaperMediaHtml(currentGroup);
-              }
-            }
+            const empty=messagesDiv.querySelector(".empty"); if(empty)messagesDiv.innerHTML="";
             renderMessage(msg);
             messagesDiv.scrollTop=messagesDiv.scrollHeight;
           }else if(msg.username!==currentUser.username){
@@ -3887,9 +3844,6 @@ function canManageGroups(){
             currentGroup={...currentGroup,...payload.new};
             chatTitle.textContent="# "+currentGroup.name;
             chatSubtitle.textContent="Room chat grup: "+currentGroup.name;
-            if(groupAvatarUrlInput) groupAvatarUrlInput.value = currentGroup.avatar_url || "";
-            if(groupWallpaperUrlInput) groupWallpaperUrlInput.value = currentGroup.background_url || "";
-            loadGroupMessages();
           }
           renderGroups();
         })
