@@ -1265,6 +1265,39 @@
   }
 </style>
 
+
+<style id="last-message-preview-style">
+  .item-preview{
+    margin-top:4px;
+    font-size:11.5px;
+    color:#cbd5e1;
+    opacity:.88;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    max-width:100%;
+  }
+
+  .item-preview.empty{
+    color:#64748b;
+    font-style:italic;
+  }
+
+  .item-preview .preview-you{
+    color:#86efac;
+    font-weight:bold;
+  }
+
+  .item-preview .preview-name{
+    color:#93c5fd;
+    font-weight:bold;
+  }
+
+  .item-meta{
+    margin-bottom:2px;
+  }
+</style>
+
 </head>
 
 <body>
@@ -1554,6 +1587,7 @@
     let allUsers=[],visibleUsers=[],allGroups=[],myGroupIds=[],currentGroupMembers=[],realtimeStarted=false;
     let unreadPrivate={}, unreadGroups={};
     let currentMessagesCache=[];
+    let lastPrivatePreview={}, lastGroupPreview={};
     let selectedFile=null, replyTo=null, editingMessage=null;
 
     function hideLoading(){
@@ -1792,6 +1826,7 @@ function canManageGroups(){
         await loadUsers();
         await loadMyGroupIds();
         await loadGroups();
+        await refreshLastMessagePreviews();
         await refreshUnreadBadges();
         if(activeTab === "users") renderUsers();
         if(activeTab === "groups") renderGroups();
@@ -1858,6 +1893,7 @@ function canManageGroups(){
       await loadUsers();
       await loadMyGroupIds();
       await loadGroups();
+      await refreshLastMessagePreviews();
       await refreshUnreadBadges();
 
       switchTab("users");
@@ -2007,6 +2043,100 @@ function canManageGroups(){
       }
     }
 
+
+    function makePreviewText(msg, type){
+      if(!msg) return "";
+
+      if(msg.is_deleted) return "Pesan telah dihapus";
+
+      let text = "";
+
+      if(msg.message && String(msg.message).trim()){
+        text = String(msg.message).trim();
+      }else if(msg.file_name){
+        text = isImage(msg.file_type, msg.file_name) ? "📷 Gambar" : "📎 " + msg.file_name;
+      }else if(msg.file_url){
+        text = "📎 File";
+      }else{
+        text = "Pesan";
+      }
+
+      if(type === "private"){
+        const isMe = msg.username === currentUser.username;
+        return (isMe ? "Anda: " : "") + text;
+      }
+
+      if(type === "group"){
+        const isMe = msg.username === currentUser.username;
+        const name = isMe ? "Anda" : (msg.display_name || msg.username || "User");
+        return name + ": " + text;
+      }
+
+      return text;
+    }
+
+    function previewHtml(text){
+      if(!text){
+        return `<div class="item-preview empty">Belum ada pesan</div>`;
+      }
+
+      const escaped = escapeHtml(shortText(text, 42));
+
+      if(escaped.startsWith("Anda:")){
+        return `<div class="item-preview"><span class="preview-you">Anda:</span>${escaped.replace("Anda:", "")}</div>`;
+      }
+
+      const colonIndex = escaped.indexOf(":");
+      if(colonIndex > 0 && colonIndex < 22){
+        const name = escaped.slice(0, colonIndex + 1);
+        const rest = escaped.slice(colonIndex + 1);
+        return `<div class="item-preview"><span class="preview-name">${name}</span>${rest}</div>`;
+      }
+
+      return `<div class="item-preview">${escaped}</div>`;
+    }
+
+    async function refreshLastMessagePreviews(){
+      if(!currentUser) return;
+
+      lastPrivatePreview = {};
+      lastGroupPreview = {};
+
+      const {data:privateMessages}=await supabaseClient
+        .from("private_messages")
+        .select("*")
+        .or("sender_id.eq."+currentUser.id+",receiver_id.eq."+currentUser.id)
+        .order("created_at",{ascending:false})
+        .limit(500);
+
+      (privateMessages||[]).forEach(function(msg){
+        const otherId = msg.sender_id === currentUser.id ? msg.receiver_id : msg.sender_id;
+        if(!lastPrivatePreview[otherId]){
+          lastPrivatePreview[otherId]=makePreviewText(msg, "private");
+        }
+      });
+
+      const groupIds=(allGroups||[]).map(function(group){ return group.id; });
+
+      if(groupIds.length){
+        const {data:groupMessages}=await supabaseClient
+          .from("messages")
+          .select("*")
+          .in("group_id", groupIds)
+          .order("created_at",{ascending:false})
+          .limit(800);
+
+        (groupMessages||[]).forEach(function(msg){
+          if(!lastGroupPreview[msg.group_id]){
+            lastGroupPreview[msg.group_id]=makePreviewText(msg, "group");
+          }
+        });
+      }
+
+      renderUsers();
+      renderGroups();
+    }
+
     function renderUsers(){
       const keyword=searchInput.value.trim().toLowerCase();
 
@@ -2031,11 +2161,13 @@ function canManageGroups(){
         if(currentTargetUser&&currentTargetUser.id===user.id&&currentMode==="private") div.classList.add("active");
         div.onclick=()=>selectUser(user.id);
         const count=unreadPrivate[user.id]||0;
+        const preview = lastPrivatePreview[user.id] || "";
         div.innerHTML=`<div class="item-row">
           <img class="item-avatar" src="${escapeHtml(avatarSrc(user, user.display_name))}" alt="${escapeHtml(user.display_name)}" />
           <div class="item-text">
             <div class="item-name">${escapeHtml(user.display_name)}</div>
             <div class="item-meta">@${escapeHtml(user.username)} • ${escapeHtml(user.role)}</div>
+            ${previewHtml(preview)}
             <div class="item-status-wrap">${onlineStatusHtml(user)}</div>
           </div>
         </div>
@@ -2092,11 +2224,13 @@ function canManageGroups(){
         if(currentGroup&&currentGroup.id===group.id&&currentMode==="group") div.classList.add("active");
         div.onclick=()=>selectGroup(group.id);
         const count=unreadGroups[group.id]||0;
+        const preview = lastGroupPreview[group.id] || "";
         div.innerHTML=`<div class="item-row">
           <img class="item-avatar" src="${escapeHtml(groupAvatarSrc(group))}" alt="${escapeHtml(group.name)}" />
           <div class="item-text">
             <div class="item-name"># ${escapeHtml(group.name)}</div>
             <div class="item-meta">Room chat grup</div>
+            ${previewHtml(preview)}
           </div>
         </div>
         <div class="badge ${count>0?"show":""}">${count}</div>`;
@@ -2982,6 +3116,9 @@ function canManageGroups(){
       supabaseClient.channel("forum-pro-realtime")
         .on("postgres_changes",{event:"INSERT",schema:"public",table:"messages"},payload=>{
           const msg=payload.new;
+          lastGroupPreview[msg.group_id]=makePreviewText(msg, "group");
+          renderGroups();
+
           if(currentMode==="group"&&currentGroup&&msg.group_id===currentGroup.id){
             const empty=messagesDiv.querySelector(".empty"); if(empty)messagesDiv.innerHTML="";
             renderMessage(msg);
@@ -3000,6 +3137,7 @@ function canManageGroups(){
           const msg=payload.new;
           if(msg.sender_id!==currentUser.id&&msg.receiver_id!==currentUser.id)return;
           const otherId=msg.sender_id===currentUser.id?msg.receiver_id:msg.sender_id;
+          lastPrivatePreview[otherId]=makePreviewText(msg, "private");
           const otherUser=allUsers.find(u=>u.id===otherId);
           if(otherUser&&!visibleUsers.some(u=>u.id===otherUser.id)){visibleUsers.push(otherUser)}
           if(currentMode==="private"&&currentTargetUser&&msg.conversation_key===makeConversationKey(currentUser.id,currentTargetUser.id)){
