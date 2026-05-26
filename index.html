@@ -75,13 +75,6 @@
     .add-group-btn{width:100%;padding:11px;border-radius:12px}
     .main{flex:1;height:100vh;display:flex;flex-direction:column;background:radial-gradient(circle at top left,rgba(34,197,94,.08),transparent 28%),radial-gradient(circle at bottom right,rgba(56,189,248,.08),transparent 28%),#0b1220}
     .chat-header{min-height:76px;padding:16px 20px;background:rgba(2,6,23,.92);border-bottom:1px solid rgba(148,163,184,.2);display:flex;justify-content:space-between;align-items:center;gap:12px}
-
-    .chat-header-main{display:flex;align-items:center;gap:12px;min-width:0}
-    .chat-heading-text{display:flex;flex-direction:column;min-width:0}
-    .chat-room-avatar-btn{width:46px;height:46px;border-radius:14px;border:1px solid rgba(148,163,184,.22);background:rgba(15,23,42,.88);padding:0;display:none;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;box-shadow:0 10px 28px rgba(2,6,23,.28);transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
-    .chat-room-avatar-btn:hover{transform:translateY(-1px) scale(1.02);border-color:rgba(45,212,191,.45);box-shadow:0 14px 32px rgba(8,145,178,.22)}
-    .chat-room-avatar{width:100%;height:100%;object-fit:cover;display:block}
-
     .chat-title{font-size:21px;font-weight:bold;margin-bottom:4px}
     .chat-subtitle{color:#94a3b8;font-size:13px}
     .header-actions{display:flex;align-items:center;gap:8px}
@@ -1883,7 +1876,7 @@
 </style>
 
 
-<style id="login-logo-clean-final">
+<style id="login-logo-only-safe-fix">
   #loginPage .login-logo-wrap{
     width:100% !important;
     display:flex !important;
@@ -1897,13 +1890,13 @@
   #loginPage .login-logo-img{
     display:block !important;
     width:min(100%, 300px) !important;
-    max-height:130px !important;
+    max-height:125px !important;
     height:auto !important;
     object-fit:contain !important;
     background:transparent !important;
     border:none !important;
     box-shadow:none !important;
-    filter:drop-shadow(0 10px 18px rgba(0,0,0,.45)) !important;
+    filter:drop-shadow(0 8px 16px rgba(0,0,0,.45)) !important;
     user-select:none !important;
     -webkit-user-drag:none !important;
   }
@@ -1915,50 +1908,6 @@
   #loginPage .login-card p{
     text-align:center !important;
     margin-top:4px !important;
-  }
-</style>
-
-
-<style id="chat-header-avatar-final">
-  .chat-header-main{
-    display:flex !important;
-    align-items:center !important;
-    gap:12px !important;
-    min-width:0 !important;
-  }
-
-  .chat-heading-text{
-    display:flex !important;
-    flex-direction:column !important;
-    min-width:0 !important;
-  }
-
-  .chat-room-avatar-btn{
-    width:46px !important;
-    height:46px !important;
-    border-radius:14px !important;
-    border:1px solid rgba(148,163,184,.22) !important;
-    background:rgba(15,23,42,.88) !important;
-    padding:0 !important;
-    display:none;
-    align-items:center !important;
-    justify-content:center !important;
-    overflow:hidden !important;
-    cursor:pointer !important;
-    box-shadow:0 10px 28px rgba(2,6,23,.28) !important;
-  }
-
-  .chat-room-avatar-btn:hover{
-    transform:translateY(-1px) scale(1.02) !important;
-    border-color:rgba(45,212,191,.45) !important;
-    box-shadow:0 14px 32px rgba(8,145,178,.22) !important;
-  }
-
-  .chat-room-avatar{
-    width:100% !important;
-    height:100% !important;
-    object-fit:cover !important;
-    display:block !important;
   }
 </style>
 
@@ -2053,15 +2002,10 @@
 
     <main class="main">
       <div class="chat-header">
-        <div class="chat-header-main">
+        <div>
           <button class="mobile-toggle" type="button" onclick="toggleSidebar()">☰</button>
-          <button class="chat-room-avatar-btn" id="chatRoomAvatarBtn" type="button" title="Lihat info chat" onclick="openCurrentChatPopup()">
-            <img class="chat-room-avatar" id="chatRoomAvatar" src="" alt="Chat Avatar">
-          </button>
-          <div class="chat-heading-text">
-            <span class="chat-title" id="chatTitle">Pilih Chat</span>
-            <div class="chat-subtitle" id="chatSubtitle">Pilih user untuk chat pribadi atau pilih grup.</div>
-          </div>
+          <span class="chat-title" id="chatTitle">Pilih Chat</span>
+          <div class="chat-subtitle" id="chatSubtitle">Pilih user untuk chat pribadi atau pilih grup.</div>
         </div>
         <div class="header-actions">
           <div class="chat-tools" id="chatTools">
@@ -2281,7 +2225,7 @@
     const toastWrap = document.getElementById("toastWrap");
     const userWallpaperLayer = document.getElementById("userWallpaperLayer");
     const reactionPickerFloat = document.getElementById("reactionPickerFloat");
-    const chatTools = document.getElementById("chatTools"), messageSearchInput = document.getElementById("messageSearchInput"), groupSettingsBtn = document.getElementById("groupSettingsBtn"), chatRoomAvatarBtn = document.getElementById("chatRoomAvatarBtn"), chatRoomAvatar = document.getElementById("chatRoomAvatar");
+    const chatTools = document.getElementById("chatTools"), messageSearchInput = document.getElementById("messageSearchInput"), groupSettingsBtn = document.getElementById("groupSettingsBtn");
     const groupSettingsModal = document.getElementById("groupSettingsModal"), settingsGroupAvatar = document.getElementById("settingsGroupAvatar"), settingsGroupAvatarLarge = document.getElementById("settingsGroupAvatarLarge"), settingsGroupNameSub = document.getElementById("settingsGroupNameSub"), groupNameInput = document.getElementById("groupNameInput"), groupAvatarInput = document.getElementById("groupAvatarInput");
     const groupTabSettings = document.getElementById("groupTabSettings"), groupTabMembers = document.getElementById("groupTabMembers"), groupTabAdd = document.getElementById("groupTabAdd");
     const groupPanelSettings = document.getElementById("groupPanelSettings"), groupPanelMembers = document.getElementById("groupPanelMembers"), groupPanelAdd = document.getElementById("groupPanelAdd");
@@ -3026,7 +2970,7 @@ function canManageGroups(){
         div.innerHTML=`${activeMedia}<div class="item-row">
           <img class="item-avatar" src="${escapeHtml(groupAvatarSrc(group))}" alt="${escapeHtml(group.name)}" />
           <div class="item-text">
-            <div class="item-name">${escapeHtml(group.name)}</div>
+            <div class="item-name"># ${escapeHtml(group.name)}</div>
             <div class="item-meta">Room chat grup</div>
             ${previewHtml(preview)}
           </div>
@@ -3092,8 +3036,6 @@ function canManageGroups(){
 
       chatTitle.textContent=currentTargetUser.display_name;
       chatSubtitle.textContent="Chat pribadi dengan @"+currentTargetUser.username;
-      updateChatHeaderAvatar();
-      updateChatHeaderAvatar();
 
       searchInput.value="";
       renderUsers();
@@ -3118,10 +3060,8 @@ function canManageGroups(){
 
       await loadCurrentGroupMembers();
 
-      chatTitle.textContent=currentGroup.name;
+      chatTitle.textContent="# "+currentGroup.name;
       chatSubtitle.textContent="Room chat grup: "+currentGroup.name;
-      updateChatHeaderAvatar();
-      updateChatHeaderAvatar();
 
       updateInviteButton();
       updateChatTools();
@@ -4044,12 +3984,9 @@ function canManageGroups(){
         return group.id === currentGroup.id ? currentGroup : group;
       });
 
-      chatTitle.textContent = currentGroup.name;
+      chatTitle.textContent = "# " + currentGroup.name;
       chatSubtitle.textContent = "Room chat grup: " + currentGroup.name;
-      updateChatHeaderAvatar();
-      updateChatHeaderAvatar();
       settingsGroupNameSub.textContent = currentGroup.name;
-      updateChatHeaderAvatar();
       renderGroups();
       showToast("Nama grup berhasil diubah.", "success", "Berhasil");
     }
@@ -4085,7 +4022,6 @@ function canManageGroups(){
 
         settingsGroupAvatar.src = groupAvatarSrc(currentGroup);
         settingsGroupAvatarLarge.src = groupAvatarSrc(currentGroup);
-        updateChatHeaderAvatar();
         renderGroups();
         showToast("Gambar grup berhasil diubah.", "success", "Berhasil");
       }catch(err){
@@ -4117,8 +4053,6 @@ function canManageGroups(){
       renderGroups();
       chatTitle.textContent="Pilih Chat";
       chatSubtitle.textContent="Pilih user untuk chat pribadi atau pilih grup.";
-      updateChatHeaderAvatar();
-      updateChatHeaderAvatar();
       messagesDiv.innerHTML=`<p class="empty">Pilih chat dulu.</p>`;
       showToast("Grup " + groupName + " berhasil dihapus.", "success", "Berhasil");
     }
@@ -4310,9 +4244,8 @@ function canManageGroups(){
           allGroups=allGroups.map(function(group){ return group.id===payload.new.id ? {...group,...payload.new} : group; });
           if(currentGroup && currentGroup.id===payload.new.id){
             currentGroup={...currentGroup,...payload.new};
-            chatTitle.textContent=currentGroup.name;
+            chatTitle.textContent="# "+currentGroup.name;
             chatSubtitle.textContent="Room chat grup: "+currentGroup.name;
-            updateChatHeaderAvatar();
           }
           renderGroups();
         })
@@ -4325,8 +4258,6 @@ function canManageGroups(){
             updateChatTools();
             chatTitle.textContent="Pilih Chat";
             chatSubtitle.textContent="Pilih user untuk chat pribadi atau pilih grup.";
-            updateChatHeaderAvatar();
-            updateChatHeaderAvatar();
             messagesDiv.innerHTML=`<p class="empty">Grup telah dihapus.</p>`;
           }
           renderGroups();
