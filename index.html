@@ -1911,6 +1911,39 @@
   }
 </style>
 
+
+<style id="small-unread-badge-fix">
+  .user-item .badge,
+  .group-item .badge{
+    position:absolute !important;
+    right:10px !important;
+    top:10px !important;
+    left:auto !important;
+    bottom:auto !important;
+    min-width:22px !important;
+    width:auto !important;
+    max-width:none !important;
+    height:22px !important;
+    padding:0 7px !important;
+    border-radius:999px !important;
+    background:#ef4444 !important;
+    color:#fff !important;
+    font-size:12px !important;
+    line-height:22px !important;
+    text-align:center !important;
+    display:none !important;
+    align-items:center !important;
+    justify-content:center !important;
+    box-shadow:0 8px 16px rgba(239,68,68,.28) !important;
+    transform:none !important;
+  }
+
+  .user-item .badge.show,
+  .group-item .badge.show{
+    display:inline-flex !important;
+  }
+</style>
+
 </head>
 
 <body>
