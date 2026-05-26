@@ -1989,6 +1989,38 @@
   }
 </style>
 
+
+<style id="group-join-system-message-style">
+  .system-message{
+    position:relative;
+    z-index:2;
+    width:calc(100% - 24px);
+    margin:10px auto;
+    padding:13px 16px;
+    border-radius:12px;
+    border:1px solid rgba(250,204,21,.68);
+    background:rgba(15,23,42,.58);
+    color:#f8fafc;
+    font-size:14px;
+    font-weight:700;
+    line-height:1.45;
+    box-shadow:0 10px 26px rgba(0,0,0,.20);
+    backdrop-filter:blur(6px);
+  }
+
+  .system-join-message{
+    text-align:left;
+  }
+
+  @media(max-width:760px){
+    .system-message{
+      width:calc(100% - 16px);
+      font-size:12.5px;
+      padding:11px 12px;
+    }
+  }
+</style>
+
 </head>
 
 <body>
@@ -3075,7 +3107,10 @@ function canManageGroups(){
 
     function renderGroups(){
       const keyword=searchInput.value.trim().toLowerCase();
-      const filtered=allGroups.filter(g=>String(g.name||"").toLowerCase().includes(keyword));
+      const allowedGroupIds = new Set(myGroupIds || []);
+      const filtered=allGroups.filter(function(g){
+        return allowedGroupIds.has(g.id) && String(g.name||"").toLowerCase().includes(keyword);
+      });
       groupsList.innerHTML="";
       if(!filtered.length){groupsList.innerHTML=`<p class="empty">${keyword ? "Grup tidak ditemukan." : "Belum ada grup. Leader/Admin bisa membuat grup baru."}</p>`;return}
       filtered.forEach(group=>{
@@ -3519,7 +3554,38 @@ function canManageGroups(){
       filtered.forEach(renderMessage);
     }
 
+
+    function isGroupJoinSystemMessage(data){
+      const text = String(data && data.message ? data.message : "");
+      return /^__SYSTEM_GROUP_JOIN__\|/i.test(text);
+    }
+
+    function parseGroupJoinSystemMessage(data){
+      const raw = String(data && data.message ? data.message : "");
+      const parts = raw.split("|");
+      return {
+        addedName: parts[1] || "User",
+        inviterName: parts[2] || "Admin"
+      };
+    }
+
+    function renderGroupJoinSystemMessage(data){
+      const info = parseGroupJoinSystemMessage(data);
+      const div = document.createElement("div");
+      div.className = "system-message system-join-message";
+      div.dataset.msgId = currentMode + "-" + data.id;
+      div.innerHTML = `${escapeHtml(info.addedName)} telah ditambahkan ke grup oleh ${escapeHtml(info.inviterName)}.`;
+      messagesDiv.appendChild(div);
+    }
+
     function renderMessage(data){
+      if(isGroupJoinSystemMessage(data)){
+        const existing=document.querySelector(`[data-msg-id="${currentMode}-${data.id}"]`);
+        if(existing) existing.remove();
+        renderGroupJoinSystemMessage(data);
+        return;
+      }
+
       const existing=document.querySelector(`[data-msg-id="${currentMode}-${data.id}"]`);
       if(existing) existing.remove();
 
@@ -4036,6 +4102,17 @@ function canManageGroups(){
         }
         return;
       }
+
+      const invitedUser = allUsers.find(function(user){ return user.id === userId; }) || {};
+      await supabaseClient
+        .from("messages")
+        .insert([{
+          group_id: currentGroup.id,
+          user_id: currentUser.id,
+          username: currentUser.username,
+          display_name: currentUser.display_name,
+          message: "__SYSTEM_GROUP_JOIN__|" + (invitedUser.display_name || invitedUser.username || "User") + "|" + (currentUser.display_name || currentUser.username || "Admin")
+        }]);
 
       await loadCurrentGroupMembers();
       renderInviteUsers();
