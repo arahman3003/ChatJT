@@ -45,8 +45,16 @@
     .section-title{font-size:12px;color:#94a3b8;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px}
     .user-item,.group-item{padding:12px;border-radius:14px;background:#111827;border:1px solid rgba(148,163,184,.12);margin-bottom:10px;cursor:pointer;position:relative}
     .user-item:hover,.user-item.active,.group-item:hover,.group-item.active{background:#14532d;border-color:rgba(134,239,172,.35)}
-    .item-name{font-weight:bold;font-size:14px;margin-bottom:4px;padding-right:34px}
-    .item-meta{font-size:12px;color:#94a3b8;line-height:1.4}
+    .item-row{display:flex;align-items:flex-start;gap:10px;padding-right:34px}
+    .item-avatar{
+      width:44px;height:44px;min-width:44px;border-radius:50%;
+      object-fit:cover;background:#0f172a;border:1px solid rgba(148,163,184,.18);
+      box-shadow:0 6px 16px rgba(0,0,0,.18), 0 0 0 2px rgba(255,255,255,.02);
+    }
+    .item-text{min-width:0;flex:1}
+    .item-name{font-weight:bold;font-size:14px;margin-bottom:4px;line-height:1.2;word-break:break-word}
+    .item-meta{font-size:12px;color:#94a3b8;line-height:1.4;word-break:break-word}
+    .item-status-wrap{margin-top:6px}
     .user-status{display:inline-flex;align-items:center;gap:5px;margin-top:5px;font-size:11px;color:#94a3b8}
     .dot{width:8px;height:8px;border-radius:999px;background:#64748b;display:inline-block}
     .dot.online{background:#22c55e;box-shadow:0 0 8px rgba(34,197,94,.8)}
@@ -1938,7 +1946,15 @@ function canManageGroups(){
         if(currentTargetUser&&currentTargetUser.id===user.id&&currentMode==="private") div.classList.add("active");
         div.onclick=()=>selectUser(user.id);
         const count=unreadPrivate[user.id]||0;
-        div.innerHTML=`<div class="item-name">${escapeHtml(user.display_name)}</div><div class="item-meta">@${escapeHtml(user.username)} • ${escapeHtml(user.role)}</div>${onlineStatusHtml(user)}<div class="badge ${count>0?"show":""}">${count}</div>`;
+        div.innerHTML=`<div class="item-row">
+          <img class="item-avatar" src="${escapeHtml(avatarSrc(user, user.display_name))}" alt="${escapeHtml(user.display_name)}" />
+          <div class="item-text">
+            <div class="item-name">${escapeHtml(user.display_name)}</div>
+            <div class="item-meta">@${escapeHtml(user.username)} • ${escapeHtml(user.role)}</div>
+            <div class="item-status-wrap">${onlineStatusHtml(user)}</div>
+          </div>
+        </div>
+        <div class="badge ${count>0?"show":""}">${count}</div>`;
         usersList.appendChild(div);
       });
     }
@@ -1991,7 +2007,14 @@ function canManageGroups(){
         if(currentGroup&&currentGroup.id===group.id&&currentMode==="group") div.classList.add("active");
         div.onclick=()=>selectGroup(group.id);
         const count=unreadGroups[group.id]||0;
-        div.innerHTML=`<div class="item-name"># ${escapeHtml(group.name)}</div><div class="item-meta">Room chat grup</div><div class="badge ${count>0?"show":""}">${count}</div>`;
+        div.innerHTML=`<div class="item-row">
+          <img class="item-avatar" src="${escapeHtml(groupAvatarSrc(group))}" alt="${escapeHtml(group.name)}" />
+          <div class="item-text">
+            <div class="item-name"># ${escapeHtml(group.name)}</div>
+            <div class="item-meta">Room chat grup</div>
+          </div>
+        </div>
+        <div class="badge ${count>0?"show":""}">${count}</div>`;
         groupsList.appendChild(div);
       });
     }
