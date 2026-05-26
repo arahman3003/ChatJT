@@ -2105,25 +2105,40 @@ function canManageGroups(){
 
     function isEmojiOnlyMessage(text){
       if(!text) return false;
-      const trimmed = String(text).trim();
-      if(!trimmed) return false;
-      const compact = trimmed.replace(/\s+/gu, "");
+
+      const compact = String(text).trim().replace(/\s+/gu, "");
+      if(!compact) return false;
+
+      // Angka / huruf / teks biasa tidak boleh dianggap emoji.
+      if(/[A-Za-z0-9]/u.test(compact)) return false;
 
       try{
-        return /^(?:\p{Extended_Pictographic}|\p{Emoji_Component}|\u200D|\uFE0F)+$/u.test(compact);
+        const hasEmoji = /\p{Extended_Pictographic}/u.test(compact);
+        if(!hasEmoji) return false;
+
+        const leftover = compact
+          .replace(/\p{Extended_Pictographic}/gu, "")
+          .replace(/[\u200D\uFE0F]/gu, "")
+          .replace(/[\u{1F3FB}-\u{1F3FF}]/gu, "");
+
+        return leftover.length === 0;
       }catch(e){
-        return /^[\u203C-\u3299\u00A9\u00AE\u200D\uFE0F\s]+$/u.test(compact);
+        const emojiLike = /^[\u{1F300}-\u{1FAFF}\u2600-\u27BF\u200D\uFE0F]+$/u.test(compact);
+        const hasNormalText = /[A-Za-z0-9]/u.test(compact);
+        return emojiLike && !hasNormalText;
       }
     }
 
     function emojiOnlySizeClass(text){
       const compact = String(text || "").trim().replace(/\s+/gu, "");
       let count = 0;
+
       try{
         const matches = compact.match(/\p{Extended_Pictographic}/gu);
-        count = matches ? matches.length : compact.length;
+        count = matches ? matches.length : 0;
       }catch(e){
-        count = Array.from(compact).length;
+        const matches = compact.match(/[\u{1F300}-\u{1FAFF}\u2600-\u27BF]/gu);
+        count = matches ? matches.length : 0;
       }
 
       if(count <= 3) return "size-xl";
