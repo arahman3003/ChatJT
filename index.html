@@ -40,7 +40,7 @@
     .profile-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px}
     .profile-row{display:flex;align-items:center;gap:10px;min-width:0}
     .profile-avatar,.msg-avatar{width:38px;height:38px;border-radius:50%;object-fit:cover;background:#334155;border:1px solid rgba(148,163,184,.25)}
-    .profile-name{font-size:16px;font-weight:bold;margin-bottom:4px}
+    .profile-name{font-size:17px;font-weight:bold;margin-bottom:4px}
     .profile-actions{display:flex;gap:8px}
     .profile-icon-btn{width:38px;height:38px;border-radius:12px;background:linear-gradient(180deg,#60a5fa,#2563eb);color:#fff;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 8px 18px rgba(37,99,235,.28);font-size:18px;font-weight:bold}
     .profile-icon-btn:hover{transform:translateY(-1px);filter:brightness(1.05)}
@@ -1688,62 +1688,78 @@
 <style id="user-wallpaper-brighter-fix">
   .user-wallpaper-layer img,
   .user-wallpaper-layer video{
-    opacity:.96 !important;
-    filter:saturate(1.16) brightness(1.02) contrast(1.04) !important;
+    width:100vw !important;
+    height:100vh !important;
+    object-fit:cover !important;
+    object-position:center center !important;
+    opacity:1 !important;
+    filter:saturate(1.24) brightness(1.14) contrast(1.10) !important;
+    transform:translateZ(0) scale(1.01) !important;
+    backface-visibility:hidden !important;
+    will-change:transform, filter, opacity;
   }
 
   .user-wallpaper-layer::after{
     background:
-      radial-gradient(circle at 18% 14%, rgba(34,197,94,.04), transparent 28%),
-      radial-gradient(circle at 88% 18%, rgba(56,189,248,.04), transparent 28%),
-      linear-gradient(180deg, rgba(2,6,23,.08), rgba(2,6,23,.22)) !important;
+      radial-gradient(circle at 18% 14%, rgba(34,197,94,.025), transparent 30%),
+      radial-gradient(circle at 88% 18%, rgba(56,189,248,.025), transparent 30%),
+      linear-gradient(180deg, rgba(2,6,23,.03), rgba(2,6,23,.10)) !important;
   }
 
   .main{
-    background:rgba(2,6,23,.12) !important;
-    backdrop-filter:blur(1px) !important;
+    background:rgba(2,6,23,.08) !important;
+    backdrop-filter:blur(.5px) !important;
   }
 
   .messages{
-    background:rgba(2,6,23,.04) !important;
+    background:rgba(2,6,23,.02) !important;
   }
 
   .chat-header{
-    background:rgba(2,6,23,.52) !important;
+    background:rgba(2,6,23,.42) !important;
+    backdrop-filter:blur(10px) !important;
   }
 
   .sidebar{
-    background:rgba(2,6,23,.62) !important;
+    background:rgba(2,6,23,.52) !important;
+    backdrop-filter:blur(12px) !important;
   }
 
   .chat-form,
   .composer-extra{
-    background:rgba(2,6,23,.58) !important;
+    background:rgba(2,6,23,.48) !important;
+    backdrop-filter:blur(10px) !important;
   }
 
   .message{
-    background:rgb(51 62 107) !important;
+    background:rgba(67, 82, 136, .82) !important;
     backdrop-filter:blur(4px);
   }
 
   .message.me{
-    background:rgb(22 101 52 / 91%) !important;
+    background:rgba(22, 101, 52, .90) !important;
   }
 
   .user-item,
   .group-item{
-    background:rgba(15,23,42,.56) !important;
+    background:rgba(15,23,42,.52) !important;
+    backdrop-filter:blur(8px) !important;
+  }
+
+  .item-active-media{
+    opacity:.95 !important;
+    filter:saturate(1.08) brightness(.98) !important;
   }
 
   @media(max-width:760px){
     .user-wallpaper-layer img,
     .user-wallpaper-layer video{
-      opacity:.88 !important;
-      filter:saturate(1.14) brightness(.96) contrast(1.04) !important;
+      opacity:.94 !important;
+      filter:saturate(1.18) brightness(1.04) contrast(1.08) !important;
     }
 
     .main{
-      background:rgba(2,6,23,.20) !important;
+      background:rgba(2,6,23,.16) !important;
     }
   }
 </style>
@@ -2070,7 +2086,7 @@
       <form id="loginForm">
         <div class="form-group">
           <label>Username</label>
-          <input type="text" id="loginUsername" placeholder="Masukkan username" autocomplete="username" />
+          <input type="text" id="loginUsername" placeholder="Contoh: danu" autocomplete="username" />
         </div>
         <div class="form-group">
           <label>Password</label>
