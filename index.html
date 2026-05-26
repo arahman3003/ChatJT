@@ -1918,6 +1918,17 @@
   }
 </style>
 
+
+<style id="private-header-avatar-fix">
+  .chat-room-avatar-btn{
+    border-radius:50% !important;
+  }
+
+  .chat-room-avatar{
+    border-radius:50% !important;
+  }
+</style>
+
 </head>
 
 <body>
@@ -2687,6 +2698,19 @@ function canManageGroups(){
     }
 
 
+
+    function currentChatHeaderAvatarSrc(){
+      if(currentMode === "group" && currentGroup){
+        return groupAvatarSrc(currentGroup);
+      }
+
+      if(currentMode === "private" && currentTargetUser){
+        return currentTargetUser.avatar_url ? currentTargetUser.avatar_url : defaultAvatar(currentTargetUser.display_name || currentTargetUser.username || "U");
+      }
+
+      return "";
+    }
+
     function updateChatHeaderAvatar(){
       if(!chatRoomAvatarBtn || !chatRoomAvatar) return;
 
@@ -2698,8 +2722,11 @@ function canManageGroups(){
       }
 
       if(currentMode === "private" && currentTargetUser){
-        chatRoomAvatar.src = userAvatarSrc(currentTargetUser);
-        chatRoomAvatar.alt = currentTargetUser.display_name || "User";
+        chatRoomAvatar.src = currentTargetUser.avatar_url
+          ? currentTargetUser.avatar_url
+          : defaultAvatar(currentTargetUser.display_name || currentTargetUser.username || "U");
+
+        chatRoomAvatar.alt = currentTargetUser.display_name || currentTargetUser.username || "User";
         chatRoomAvatarBtn.style.display = "inline-flex";
         return;
       }
