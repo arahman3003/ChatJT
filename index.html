@@ -1400,7 +1400,10 @@
       <input class="modal-input" type="password" id="settingsPassword" placeholder="Kosongkan jika tidak diganti">
       <label>Foto Profil</label>
       <input class="modal-input" type="file" id="settingsAvatarFile" accept="image/*">
-      <button class="modal-save" onclick="saveProfileSettings()">Simpan Profil</button>
+      <div class="profile-settings-actions">
+        <button class="modal-danger" id="deleteProfileAvatarBtn" onclick="deleteProfileAvatar()">Hapus Foto Profil</button>
+        <button class="modal-save" onclick="saveProfileSettings()">Simpan Profil</button>
+      </div>
     </div>
   </div>
 
@@ -1459,7 +1462,7 @@
     const fileInput = document.getElementById("fileInput"), filePreview = document.getElementById("filePreview"), filePreviewText = document.getElementById("filePreviewText");
     const emojiPicker = document.getElementById("emojiPicker"), emojiGrid = document.getElementById("emojiGrid"), emojiSearchInput = document.getElementById("emojiSearchInput");
     const myAvatar = document.getElementById("myAvatar");
-    const profileSettingsModal = document.getElementById("profileSettingsModal"), settingsDisplayName = document.getElementById("settingsDisplayName"), settingsPassword = document.getElementById("settingsPassword"), settingsAvatarFile = document.getElementById("settingsAvatarFile");
+    const profileSettingsModal = document.getElementById("profileSettingsModal"), settingsDisplayName = document.getElementById("settingsDisplayName"), settingsPassword = document.getElementById("settingsPassword"), settingsAvatarFile = document.getElementById("settingsAvatarFile"), deleteProfileAvatarBtn = document.getElementById("deleteProfileAvatarBtn");
     const userProfileModal = document.getElementById("userProfileModal"), popupAvatar = document.getElementById("popupAvatar"), popupName = document.getElementById("popupName"), popupUsername = document.getElementById("popupUsername"), popupRole = document.getElementById("popupRole"), popupStatus = document.getElementById("popupStatus");
     const imageModal = document.getElementById("imageModal"), imageModalImg = document.getElementById("imageModalImg");
     const replyPreview = document.getElementById("replyPreview"), replyPreviewText = document.getElementById("replyPreviewText");
@@ -2459,6 +2462,9 @@ function canManageGroups(){
       settingsDisplayName.value = currentUser.display_name || "";
       settingsPassword.value = "";
       settingsAvatarFile.value = "";
+      if(deleteProfileAvatarBtn){
+        deleteProfileAvatarBtn.style.display = currentUser && currentUser.avatar_url ? "block" : "none";
+      }
       profileSettingsModal.classList.add("show");
     }
 
@@ -2474,6 +2480,43 @@ function canManageGroups(){
       if(error) throw error;
       const { data } = supabaseClient.storage.from(BUCKET_NAME).getPublicUrl(path);
       return data.publicUrl;
+    }
+
+
+    async function deleteProfileAvatar(){
+      if(!currentUser) return;
+
+      try{
+        const { data, error } = await supabaseClient
+          .from("users")
+          .update({ avatar_url: null })
+          .eq("id", currentUser.id)
+          .select("id,username,password,display_name,role,is_online,last_seen,avatar_url")
+          .single();
+
+        if(error) throw error;
+
+        currentUser = data;
+        localStorage.setItem("forum_user_pro", JSON.stringify(currentUser));
+
+        profileName.textContent = currentUser.display_name;
+        profileRole.textContent = currentUser.role;
+        myAvatar.src = avatarSrc(currentUser);
+        settingsAvatarFile.value = "";
+
+        if(deleteProfileAvatarBtn){
+          deleteProfileAvatarBtn.style.display = "none";
+        }
+
+        await loadUsers();
+
+        if(currentMode === "group") await loadGroupMessages();
+        if(currentMode === "private" && currentTargetUser) await loadPrivateMessages();
+
+        showToast("Foto profil berhasil dihapus.", "success", "Berhasil");
+      }catch(err){
+        showToast("Gagal menghapus foto profil: " + err.message, "error", "Gagal");
+      }
     }
 
     async function saveProfileSettings(){
@@ -2512,6 +2555,10 @@ function canManageGroups(){
         profileName.textContent = currentUser.display_name;
         profileRole.textContent = currentUser.role;
         myAvatar.src = avatarSrc(currentUser);
+
+        if(deleteProfileAvatarBtn){
+          deleteProfileAvatarBtn.style.display = currentUser.avatar_url ? "block" : "none";
+        }
 
         await loadUsers();
 
