@@ -2296,7 +2296,7 @@ function canManageGroups(){
         div.innerHTML=`<div class="item-row">
           <img class="item-avatar" src="${escapeHtml(avatarSrc(user, user.display_name))}" alt="${escapeHtml(user.display_name)}" />
           <div class="item-text">
-            <div class="item-name">${escapeHtml(user.display_name)} • ${escapeHtml(user.role)}</div>
+            <div class="item-name">${escapeHtml(user.display_name)}</div>
             ${previewHtml(preview)}
             <div class="item-status-wrap">${onlineStatusHtml(user)}</div>
           </div>
