@@ -433,6 +433,49 @@
       color:#9fb4cd;
     }
 
+
+    .chat-header-main{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width:0;
+    }
+
+    .chat-heading-text{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+    }
+
+    .chat-room-avatar-btn{
+      width:48px;
+      height:48px;
+      border-radius:16px;
+      border:1px solid rgba(148,163,184,.18);
+      background:rgba(15,23,42,.85);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:0;
+      overflow:hidden;
+      box-shadow:0 10px 24px rgba(0,0,0,.18);
+      flex:0 0 auto;
+    }
+
+    .chat-room-avatar-btn:hover{
+      border-color:rgba(56,189,248,.42);
+      box-shadow:0 12px 28px rgba(14,165,233,.2);
+      transform:translateY(-1px);
+    }
+
+    .chat-room-avatar{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+      background:#0f172a;
+    }
+
     .status.online{
       background:rgba(34,197,94,.16);
       border-color:rgba(34,197,94,.38);
@@ -1964,10 +2007,15 @@
 
     <main class="main">
       <div class="chat-header">
-        <div>
+        <div class="chat-header-main">
           <button class="mobile-toggle" type="button" onclick="toggleSidebar()">☰</button>
-          <span class="chat-title" id="chatTitle">Pilih Chat</span>
-          <div class="chat-subtitle" id="chatSubtitle">Pilih user untuk chat pribadi atau pilih grup.</div>
+          <button class="chat-room-avatar-btn" id="chatRoomAvatarBtn" type="button" title="Lihat info chat" onclick="openCurrentChatPopup()">
+            <img class="chat-room-avatar" id="chatRoomAvatar" src="" alt="Chat Avatar">
+          </button>
+          <div class="chat-heading-text">
+            <span class="chat-title" id="chatTitle">Pilih Chat</span>
+            <div class="chat-subtitle" id="chatSubtitle">Pilih user untuk chat pribadi atau pilih grup.</div>
+          </div>
         </div>
         <div class="header-actions">
           <div class="chat-tools" id="chatTools">
@@ -2187,7 +2235,7 @@
     const toastWrap = document.getElementById("toastWrap");
     const userWallpaperLayer = document.getElementById("userWallpaperLayer");
     const reactionPickerFloat = document.getElementById("reactionPickerFloat");
-    const chatTools = document.getElementById("chatTools"), messageSearchInput = document.getElementById("messageSearchInput"), groupSettingsBtn = document.getElementById("groupSettingsBtn");
+    const chatTools = document.getElementById("chatTools"), messageSearchInput = document.getElementById("messageSearchInput"), groupSettingsBtn = document.getElementById("groupSettingsBtn"), chatRoomAvatarBtn = document.getElementById("chatRoomAvatarBtn"), chatRoomAvatar = document.getElementById("chatRoomAvatar");
     const groupSettingsModal = document.getElementById("groupSettingsModal"), settingsGroupAvatar = document.getElementById("settingsGroupAvatar"), settingsGroupAvatarLarge = document.getElementById("settingsGroupAvatarLarge"), settingsGroupNameSub = document.getElementById("settingsGroupNameSub"), groupNameInput = document.getElementById("groupNameInput"), groupAvatarInput = document.getElementById("groupAvatarInput");
     const groupTabSettings = document.getElementById("groupTabSettings"), groupTabMembers = document.getElementById("groupTabMembers"), groupTabAdd = document.getElementById("groupTabAdd");
     const groupPanelSettings = document.getElementById("groupPanelSettings"), groupPanelMembers = document.getElementById("groupPanelMembers"), groupPanelAdd = document.getElementById("groupPanelAdd");
@@ -2638,6 +2686,39 @@ function canManageGroups(){
       }
     }
 
+
+    function updateChatHeaderAvatar(){
+      if(!chatRoomAvatarBtn || !chatRoomAvatar) return;
+
+      if(currentMode === "group" && currentGroup){
+        chatRoomAvatar.src = groupAvatarSrc(currentGroup);
+        chatRoomAvatar.alt = currentGroup.name || "Group";
+        chatRoomAvatarBtn.style.display = "inline-flex";
+        return;
+      }
+
+      if(currentMode === "private" && currentTargetUser){
+        chatRoomAvatar.src = userAvatarSrc(currentTargetUser);
+        chatRoomAvatar.alt = currentTargetUser.display_name || "User";
+        chatRoomAvatarBtn.style.display = "inline-flex";
+        return;
+      }
+
+      chatRoomAvatarBtn.style.display = "none";
+      chatRoomAvatar.removeAttribute("src");
+      chatRoomAvatar.alt = "Chat Avatar";
+    }
+
+    function openCurrentChatPopup(){
+      if(currentMode === "group" && currentGroup){
+        openGroupSettings();
+        return;
+      }
+      if(currentMode === "private" && currentTargetUser){
+        openUserProfile(currentTargetUser);
+      }
+    }
+
     function handleSearch(){activeTab==="users"?renderUsers():renderGroups()}
 
     function getReadKey(type, id){
@@ -2932,7 +3013,7 @@ function canManageGroups(){
         div.innerHTML=`${activeMedia}<div class="item-row">
           <img class="item-avatar" src="${escapeHtml(groupAvatarSrc(group))}" alt="${escapeHtml(group.name)}" />
           <div class="item-text">
-            <div class="item-name"># ${escapeHtml(group.name)}</div>
+            <div class="item-name">${escapeHtml(group.name)}</div>
             <div class="item-meta">Room chat grup</div>
             ${previewHtml(preview)}
           </div>
@@ -2998,6 +3079,7 @@ function canManageGroups(){
 
       chatTitle.textContent=currentTargetUser.display_name;
       chatSubtitle.textContent="Chat pribadi dengan @"+currentTargetUser.username;
+      updateChatHeaderAvatar();
 
       searchInput.value="";
       renderUsers();
@@ -3022,8 +3104,9 @@ function canManageGroups(){
 
       await loadCurrentGroupMembers();
 
-      chatTitle.textContent="# "+currentGroup.name;
+      chatTitle.textContent=currentGroup.name;
       chatSubtitle.textContent="Room chat grup: "+currentGroup.name;
+      updateChatHeaderAvatar();
 
       updateInviteButton();
       updateChatTools();
@@ -3946,8 +4029,9 @@ function canManageGroups(){
         return group.id === currentGroup.id ? currentGroup : group;
       });
 
-      chatTitle.textContent = "# " + currentGroup.name;
+      chatTitle.textContent = currentGroup.name;
       chatSubtitle.textContent = "Room chat grup: " + currentGroup.name;
+      updateChatHeaderAvatar();
       settingsGroupNameSub.textContent = currentGroup.name;
       renderGroups();
       showToast("Nama grup berhasil diubah.", "success", "Berhasil");
@@ -4014,6 +4098,7 @@ function canManageGroups(){
       updateChatTools();
       renderGroups();
       chatTitle.textContent="Pilih Chat";
+      updateChatHeaderAvatar();
       chatSubtitle.textContent="Pilih user untuk chat pribadi atau pilih grup.";
       messagesDiv.innerHTML=`<p class="empty">Pilih chat dulu.</p>`;
       showToast("Grup " + groupName + " berhasil dihapus.", "success", "Berhasil");
