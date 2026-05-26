@@ -1737,6 +1737,31 @@
   }
 </style>
 
+
+<style id="center-chat-images-fix">
+  .file-card{
+    display:flex !important;
+    justify-content:center !important;
+    align-items:center !important;
+    width:100% !important;
+  }
+
+  .file-card img{
+    margin-left:auto !important;
+    margin-right:auto !important;
+    display:block !important;
+  }
+
+  .message .file-card{
+    text-align:center !important;
+  }
+
+  .message.me .file-card,
+  .message:not(.me) .file-card{
+    justify-content:center !important;
+  }
+</style>
+
 </head>
 
 <body>
