@@ -1415,6 +1415,133 @@
   }
 </style>
 
+
+<style id="group-wallpaper-media-style">
+  .messages{
+    position:relative;
+    overflow:hidden;
+  }
+
+  .chat-wallpaper-media{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    opacity:.22;
+    filter:blur(0px) saturate(1.05);
+    pointer-events:none;
+    z-index:0;
+  }
+
+  .chat-wallpaper-overlay{
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    z-index:1;
+    background:
+      radial-gradient(circle at 18% 12%, rgba(34,197,94,.10), transparent 30%),
+      linear-gradient(180deg, rgba(2,6,23,.62), rgba(2,6,23,.84));
+  }
+
+  .messages > .message,
+  .messages > .empty,
+  .messages > .error{
+    position:relative;
+    z-index:2;
+  }
+
+  .group-item.has-media{
+    min-height:78px;
+    overflow:hidden;
+    background:rgba(15,23,42,.72) !important;
+  }
+
+  .group-item-media{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    opacity:.50;
+    z-index:0;
+    pointer-events:none;
+  }
+
+  .group-item.has-media::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(90deg,rgba(2,6,23,.78),rgba(2,6,23,.36));
+    z-index:1;
+    pointer-events:none;
+  }
+
+  .group-item.has-media .item-row,
+  .group-item.has-media .badge{
+    position:relative;
+    z-index:2;
+  }
+
+  .group-item.has-media .item-name,
+  .group-item.has-media .item-meta,
+  .group-item.has-media .item-preview{
+    text-shadow:0 2px 8px rgba(0,0,0,.75);
+  }
+
+  .settings-url-box{
+    margin-top:14px;
+    padding:12px;
+    border-radius:14px;
+    border:1px solid rgba(148,163,184,.14);
+    background:rgba(15,23,42,.48);
+  }
+
+  .settings-url-row{
+    display:flex;
+    gap:8px;
+    align-items:center;
+  }
+
+  .settings-url-input{
+    flex:1;
+    min-width:0;
+    background:#1e293b;
+    color:#fff;
+    border:1px solid rgba(148,163,184,.16);
+    border-radius:12px;
+    padding:11px 12px;
+  }
+
+  .settings-url-help{
+    color:#94a3b8;
+    font-size:11.5px;
+    line-height:1.4;
+    margin-top:8px;
+  }
+
+  .clear-url-btn{
+    background:rgba(239,68,68,.12);
+    color:#fecaca;
+    border:1px solid rgba(239,68,68,.34);
+    border-radius:12px;
+    padding:10px 11px;
+    white-space:nowrap;
+  }
+
+  .clear-url-btn:hover{
+    background:rgba(239,68,68,.20);
+    color:#fff;
+  }
+
+  @media(max-width:760px){
+    .settings-url-row{
+      flex-direction:column;
+      align-items:stretch;
+    }
+  }
+</style>
+
 </head>
 
 <body>
@@ -1590,8 +1717,28 @@
           <div>
             <div style="font-size:13px;color:#cbd5e1;margin-bottom:8px;">Gambar profil saat ini</div>
             <input type="file" id="groupAvatarInput" accept="image/*" style="display:none" onchange="saveGroupAvatar()">
-            <button class="blue-btn" onclick="document.getElementById('groupAvatarInput').click()">Ubah Gambar</button>
+            <button class="blue-btn" onclick="document.getElementById('groupAvatarInput').click()">Upload Gambar</button>
           </div>
+        </div>
+
+        <div class="settings-url-box">
+          <label>Link Profil/Media Grup</label>
+          <div class="settings-url-row">
+            <input class="settings-url-input" id="groupAvatarUrlInput" type="text" placeholder="Link gambar / GIF / video untuk tampilan sidebar">
+            <button class="blue-btn" onclick="saveGroupAvatarUrl()">Simpan</button>
+            <button class="clear-url-btn" onclick="clearGroupAvatarUrl()">Hapus</button>
+          </div>
+          <div class="settings-url-help">Bisa pakai link JPG, PNG, GIF, WEBP, MP4, WEBM. Kalau video, sidebar akan menampilkan video otomatis.</div>
+        </div>
+
+        <div class="settings-url-box">
+          <label>Wallpaper Chat Grup</label>
+          <div class="settings-url-row">
+            <input class="settings-url-input" id="groupWallpaperUrlInput" type="text" placeholder="Link gambar / GIF / video untuk background chat">
+            <button class="blue-btn" onclick="saveGroupWallpaperUrl()">Simpan</button>
+            <button class="clear-url-btn" onclick="clearGroupWallpaperUrl()">Hapus</button>
+          </div>
+          <div class="settings-url-help">Wallpaper hanya tampil saat membuka grup ini. Mendukung gambar, GIF, dan video seperti MP4/WEBM.</div>
         </div>
 
         <div class="settings-section-title">Informasi Grup</div>
@@ -1698,7 +1845,7 @@
     const toastWrap = document.getElementById("toastWrap");
     const reactionPickerFloat = document.getElementById("reactionPickerFloat");
     const chatTools = document.getElementById("chatTools"), messageSearchInput = document.getElementById("messageSearchInput"), groupSettingsBtn = document.getElementById("groupSettingsBtn");
-    const groupSettingsModal = document.getElementById("groupSettingsModal"), settingsGroupAvatar = document.getElementById("settingsGroupAvatar"), settingsGroupAvatarLarge = document.getElementById("settingsGroupAvatarLarge"), settingsGroupNameSub = document.getElementById("settingsGroupNameSub"), groupNameInput = document.getElementById("groupNameInput"), groupAvatarInput = document.getElementById("groupAvatarInput");
+    const groupSettingsModal = document.getElementById("groupSettingsModal"), settingsGroupAvatar = document.getElementById("settingsGroupAvatar"), settingsGroupAvatarLarge = document.getElementById("settingsGroupAvatarLarge"), settingsGroupNameSub = document.getElementById("settingsGroupNameSub"), groupNameInput = document.getElementById("groupNameInput"), groupAvatarInput = document.getElementById("groupAvatarInput"), groupAvatarUrlInput = document.getElementById("groupAvatarUrlInput"), groupWallpaperUrlInput = document.getElementById("groupWallpaperUrlInput");
     const groupTabSettings = document.getElementById("groupTabSettings"), groupTabMembers = document.getElementById("groupTabMembers"), groupTabAdd = document.getElementById("groupTabAdd");
     const groupPanelSettings = document.getElementById("groupPanelSettings"), groupPanelMembers = document.getElementById("groupPanelMembers"), groupPanelAdd = document.getElementById("groupPanelAdd");
     const groupMembersList = document.getElementById("groupMembersList"), groupAddSearchInput = document.getElementById("groupAddSearchInput"), groupAddUsersList = document.getElementById("groupAddUsersList");
@@ -1880,6 +2027,34 @@ function canManageGroups(){
 
     function groupAvatarSrc(group){
       return group && group.avatar_url ? group.avatar_url : defaultAvatar(group?.name || "G");
+    }
+
+    function isVideoUrl(url){
+      return /\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(String(url || ""));
+    }
+
+    function isMediaUrl(url){
+      return !!url && /\.(png|jpe?g|gif|webp|svg|mp4|webm|ogg|mov)(\?.*)?$/i.test(String(url || ""));
+    }
+
+    function groupMediaHtml(group, className){
+      const url = group && group.avatar_url ? group.avatar_url : "";
+      if(!url)return "";
+      const safeUrl = escapeHtml(url);
+      if(isVideoUrl(url)){
+        return `<video class="${className}" src="${safeUrl}" autoplay muted loop playsinline></video>`;
+      }
+      return `<img class="${className}" src="${safeUrl}" alt="${escapeHtml(group.name || "Group")}">`;
+    }
+
+    function wallpaperMediaHtml(group){
+      const url = group && group.background_url ? group.background_url : "";
+      if(!url)return "";
+      const safeUrl = escapeHtml(url);
+      if(isVideoUrl(url)){
+        return `<video class="chat-wallpaper-media" src="${safeUrl}" autoplay muted loop playsinline></video><div class="chat-wallpaper-overlay"></div>`;
+      }
+      return `<img class="chat-wallpaper-media" src="${safeUrl}" alt="Wallpaper"><div class="chat-wallpaper-overlay"></div>`;
     }
 
     function displayReplyName(name){
@@ -2355,8 +2530,13 @@ function canManageGroups(){
         div.onclick=()=>selectGroup(group.id);
         const count=unreadGroups[group.id]||0;
         const preview = lastGroupPreview[group.id] || "";
-        div.innerHTML=`<div class="item-row">
-          <img class="item-avatar" src="${escapeHtml(groupAvatarSrc(group))}" alt="${escapeHtml(group.name)}" />
+        if(group.avatar_url) div.classList.add("has-media");
+        const avatarNode = isVideoUrl(group.avatar_url)
+          ? `<video class="item-avatar" src="${escapeHtml(group.avatar_url)}" autoplay muted loop playsinline></video>`
+          : `<img class="item-avatar" src="${escapeHtml(groupAvatarSrc(group))}" alt="${escapeHtml(group.name)}" />`;
+        div.innerHTML=`${groupMediaHtml(group, "group-item-media")}
+        <div class="item-row">
+          ${avatarNode}
           <div class="item-text">
             <div class="item-name"># ${escapeHtml(group.name)}</div>
             <div class="item-meta">Room chat grup</div>
@@ -2741,8 +2921,12 @@ function canManageGroups(){
       }
 
       messagesDiv.innerHTML="";
+      if(currentMode === "group" && currentGroup && currentGroup.background_url){
+        messagesDiv.innerHTML = wallpaperMediaHtml(currentGroup);
+      }
+
       if(!data||!data.length){
-        messagesDiv.innerHTML=`<p class="empty">${emptyText}</p>`;
+        messagesDiv.insertAdjacentHTML("beforeend", `<p class="empty">${emptyText}</p>`);
         return;
       }
 
@@ -2778,9 +2962,12 @@ function canManageGroups(){
       });
 
       messagesDiv.innerHTML="";
+      if(currentMode === "group" && currentGroup && currentGroup.background_url){
+        messagesDiv.innerHTML = wallpaperMediaHtml(currentGroup);
+      }
 
       if(!filtered.length){
-        messagesDiv.innerHTML=`<p class="empty">Pesan tidak ditemukan.</p>`;
+        messagesDiv.insertAdjacentHTML("beforeend", `<p class="empty">Pesan tidak ditemukan.</p>`);
         return;
       }
 
@@ -3268,6 +3455,8 @@ function canManageGroups(){
       settingsGroupAvatarLarge.src = groupAvatarSrc(currentGroup);
       settingsGroupNameSub.textContent = currentGroup.name;
       groupNameInput.value = currentGroup.name || "";
+      if(groupAvatarUrlInput) groupAvatarUrlInput.value = currentGroup.avatar_url || "";
+      if(groupWallpaperUrlInput) groupWallpaperUrlInput.value = currentGroup.background_url || "";
       groupSettingsModal.classList.add("show");
       switchGroupSettingsTab("settings");
       loadCurrentGroupMembers().then(renderGroupMembers);
@@ -3308,6 +3497,133 @@ function canManageGroups(){
       settingsGroupNameSub.textContent = currentGroup.name;
       renderGroups();
       showToast("Nama grup berhasil diubah.", "success", "Berhasil");
+    }
+
+
+    async function saveGroupAvatarUrl(){
+      if(!currentGroup)return;
+      const url = (groupAvatarUrlInput.value || "").trim();
+
+      if(!url){
+        showToast("Masukkan link media grup dulu.", "warn", "Perhatian");
+        return;
+      }
+
+      if(!isMediaUrl(url)){
+        showToast("Link harus gambar, GIF, atau video.", "warn", "Perhatian");
+        return;
+      }
+
+      const {data,error}=await supabaseClient
+        .from("groups")
+        .update({avatar_url:url})
+        .eq("id", currentGroup.id)
+        .select()
+        .single();
+
+      if(error){
+        showToast("Gagal menyimpan media grup: " + error.message, "error", "Gagal");
+        return;
+      }
+
+      currentGroup = {...currentGroup, ...data};
+      allGroups = allGroups.map(function(group){
+        return group.id === currentGroup.id ? currentGroup : group;
+      });
+
+      settingsGroupAvatar.src = groupAvatarSrc(currentGroup);
+      settingsGroupAvatarLarge.src = groupAvatarSrc(currentGroup);
+      renderGroups();
+      showToast("Media grup berhasil disimpan.", "success", "Berhasil");
+    }
+
+    async function clearGroupAvatarUrl(){
+      if(!currentGroup)return;
+
+      const {data,error}=await supabaseClient
+        .from("groups")
+        .update({avatar_url:null})
+        .eq("id", currentGroup.id)
+        .select()
+        .single();
+
+      if(error){
+        showToast("Gagal menghapus media grup: " + error.message, "error", "Gagal");
+        return;
+      }
+
+      currentGroup = {...currentGroup, ...data};
+      allGroups = allGroups.map(function(group){
+        return group.id === currentGroup.id ? currentGroup : group;
+      });
+
+      if(groupAvatarUrlInput) groupAvatarUrlInput.value = "";
+      settingsGroupAvatar.src = groupAvatarSrc(currentGroup);
+      settingsGroupAvatarLarge.src = groupAvatarSrc(currentGroup);
+      renderGroups();
+      showToast("Media grup berhasil dihapus.", "success", "Berhasil");
+    }
+
+    async function saveGroupWallpaperUrl(){
+      if(!currentGroup)return;
+      const url = (groupWallpaperUrlInput.value || "").trim();
+
+      if(!url){
+        showToast("Masukkan link wallpaper dulu.", "warn", "Perhatian");
+        return;
+      }
+
+      if(!isMediaUrl(url)){
+        showToast("Link wallpaper harus gambar, GIF, atau video.", "warn", "Perhatian");
+        return;
+      }
+
+      const {data,error}=await supabaseClient
+        .from("groups")
+        .update({background_url:url})
+        .eq("id", currentGroup.id)
+        .select()
+        .single();
+
+      if(error){
+        showToast("Gagal menyimpan wallpaper: " + error.message, "error", "Gagal");
+        return;
+      }
+
+      currentGroup = {...currentGroup, ...data};
+      allGroups = allGroups.map(function(group){
+        return group.id === currentGroup.id ? currentGroup : group;
+      });
+
+      await loadGroupMessages();
+      renderGroups();
+      showToast("Wallpaper grup berhasil disimpan.", "success", "Berhasil");
+    }
+
+    async function clearGroupWallpaperUrl(){
+      if(!currentGroup)return;
+
+      const {data,error}=await supabaseClient
+        .from("groups")
+        .update({background_url:null})
+        .eq("id", currentGroup.id)
+        .select()
+        .single();
+
+      if(error){
+        showToast("Gagal menghapus wallpaper: " + error.message, "error", "Gagal");
+        return;
+      }
+
+      currentGroup = {...currentGroup, ...data};
+      allGroups = allGroups.map(function(group){
+        return group.id === currentGroup.id ? currentGroup : group;
+      });
+
+      if(groupWallpaperUrlInput) groupWallpaperUrlInput.value = "";
+      await loadGroupMessages();
+      renderGroups();
+      showToast("Wallpaper grup berhasil dihapus.", "success", "Berhasil");
     }
 
     async function saveGroupAvatar(){
@@ -3470,7 +3786,13 @@ function canManageGroups(){
           renderGroups();
 
           if(currentMode==="group"&&currentGroup&&msg.group_id===currentGroup.id){
-            const empty=messagesDiv.querySelector(".empty"); if(empty)messagesDiv.innerHTML="";
+            const empty=messagesDiv.querySelector(".empty");
+            if(empty){
+              messagesDiv.innerHTML="";
+              if(currentMode === "group" && currentGroup && currentGroup.background_url){
+                messagesDiv.innerHTML = wallpaperMediaHtml(currentGroup);
+              }
+            }
             renderMessage(msg);
             messagesDiv.scrollTop=messagesDiv.scrollHeight;
           }else if(msg.username!==currentUser.username){
@@ -3565,6 +3887,9 @@ function canManageGroups(){
             currentGroup={...currentGroup,...payload.new};
             chatTitle.textContent="# "+currentGroup.name;
             chatSubtitle.textContent="Room chat grup: "+currentGroup.name;
+            if(groupAvatarUrlInput) groupAvatarUrlInput.value = currentGroup.avatar_url || "";
+            if(groupWallpaperUrlInput) groupWallpaperUrlInput.value = currentGroup.background_url || "";
+            loadGroupMessages();
           }
           renderGroups();
         })
