@@ -2870,8 +2870,45 @@ function canManageGroups(){
       return localStorage.getItem(getReadKey(type, id)) || "1970-01-01T00:00:00.000Z";
     }
 
-    function setLastRead(type, id){
-      localStorage.setItem(getReadKey(type, id), new Date().toISOString());
+    function setLastRead(type, id, timestamp){
+      if(!currentUser || !id)return;
+
+      const key = getReadKey(type, id);
+      const oldValue = localStorage.getItem(key) || "1970-01-01T00:00:00.000Z";
+      const nextValue = timestamp || new Date().toISOString();
+
+      const oldTime = new Date(oldValue).getTime() || 0;
+      const nextTime = new Date(nextValue).getTime() || 0;
+
+      // Jangan pernah mundurkan waktu baca.
+      // Pakai waktu created_at pesan dari Supabase supaya notif lama tidak muncul lagi saat login ulang.
+      localStorage.setItem(key, (nextTime > oldTime ? nextValue : oldValue));
+    }
+
+    function markConversationRead(type, id, messages){
+      if(!id)return;
+
+      const list = Array.isArray(messages) ? messages : [];
+      let latest = null;
+
+      list.forEach(function(msg){
+        if(!msg || !msg.created_at)return;
+        if(!latest || new Date(msg.created_at).getTime() > new Date(latest).getTime()){
+          latest = msg.created_at;
+        }
+      });
+
+      setLastRead(type, id, latest || new Date().toISOString());
+
+      if(type === "private"){
+        unreadPrivate[id] = 0;
+        renderUsers();
+      }
+
+      if(type === "group"){
+        unreadGroups[id] = 0;
+        renderGroups();
+      }
     }
 
     function addUnreadPrivate(userId, amount){
@@ -3268,6 +3305,10 @@ function canManageGroups(){
       const {data,error}=await supabaseClient.from("private_messages").select("*").eq("conversation_key",key).order("created_at",{ascending:true}).limit(250);
       await loadReactionsForMessages("private", data || []);
       renderMessageList(data,error,"Belum ada pesan pribadi.");
+
+      if(!error){
+        markConversationRead("private", currentTargetUser.id, data || []);
+      }
     }
 
     async function loadGroupMessages(){
@@ -3275,6 +3316,10 @@ function canManageGroups(){
       const {data,error}=await supabaseClient.from("messages").select("*").eq("group_id",currentGroup.id).order("created_at",{ascending:true}).limit(250);
       await loadReactionsForMessages("group", data || []);
       renderMessageList(data,error,"Belum ada pesan di grup ini.");
+
+      if(!error){
+        markConversationRead("group", currentGroup.id, data || []);
+      }
     }
 
 
@@ -4388,6 +4433,7 @@ function canManageGroups(){
             const empty=messagesDiv.querySelector(".empty"); if(empty)messagesDiv.innerHTML="";
             renderMessage(msg);
             messagesDiv.scrollTop=messagesDiv.scrollHeight;
+            markConversationRead("group", currentGroup.id, [msg]);
           }else if(msg.username!==currentUser.username){
             const lastRead=getLastRead("group", msg.group_id);
             if(new Date(msg.created_at).getTime()>new Date(lastRead).getTime()){
@@ -4410,6 +4456,7 @@ function canManageGroups(){
             const empty=messagesDiv.querySelector(".empty"); if(empty)messagesDiv.innerHTML="";
             renderMessage(msg);
             messagesDiv.scrollTop=messagesDiv.scrollHeight;
+            markConversationRead("private", currentTargetUser.id, [msg]);
           }else if(msg.sender_id!==currentUser.id){
             const lastRead=getLastRead("private", otherId);
             if(new Date(msg.created_at).getTime()>new Date(lastRead).getTime()){
