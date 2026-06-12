@@ -102,6 +102,7 @@
     .mini-btn:hover{background:#334155;color:#fff;transform:none}
     .mini-btn.delete:hover{background:rgba(239,68,68,.22);color:#fecaca}
     .mini-btn svg{width:15px;height:15px;stroke:currentColor}
+    .msg-actions .reaction-top-btn{color:#a78bfa;font-weight:900;font-size:17px}
     .text{font-size:15px;line-height:1.45;white-space:pre-wrap}
     .text .chat-link{color:#7dd3fc;font-weight:900;text-decoration:underline;text-underline-offset:3px;word-break:break-all;text-shadow:0 0 10px rgba(56,189,248,.35)}
     .message.me .text .chat-link{color:#bbf7d0;text-shadow:0 0 10px rgba(134,239,172,.35)}
@@ -1982,6 +1983,40 @@
 </style>
 
 
+
+<style id="tab-unread-badge-fix">
+  .tab-btn{
+    position:relative !important;
+  }
+
+  .tab-badge{
+    position:absolute !important;
+    right:9px !important;
+    top:-7px !important;
+    min-width:20px !important;
+    height:20px !important;
+    padding:0 6px !important;
+    border-radius:999px !important;
+    background:#ef4444 !important;
+    color:#fff !important;
+    font-size:11px !important;
+    font-weight:900 !important;
+    line-height:20px !important;
+    text-align:center !important;
+    display:none !important;
+    box-shadow:0 8px 18px rgba(239,68,68,.45) !important;
+    border:1px solid rgba(255,255,255,.25) !important;
+    z-index:5 !important;
+    pointer-events:none !important;
+  }
+
+  .tab-badge.show{
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+  }
+</style>
+
 <style id="chat-header-avatar-title-fix">
   .chat-header-main{
     display:flex !important;
@@ -2058,12 +2093,6 @@
   }
 </style>
 
-
-<style id="tab-badge-style-fix">
-  .tab-btn{position:relative !important;}
-  .tab-badge{position:absolute !important;right:8px !important;top:-7px !important;min-width:19px !important;height:19px !important;padding:0 6px !important;border-radius:999px !important;background:#ef4444 !important;color:#fff !important;font-size:11px !important;font-weight:900 !important;line-height:19px !important;display:none !important;align-items:center !important;justify-content:center !important;box-shadow:0 0 0 2px rgba(15,23,42,.96),0 8px 16px rgba(239,68,68,.35) !important;z-index:5 !important;}
-  .tab-badge.show{display:inline-flex !important;}
-</style>
 </head>
 
 <body>
@@ -2890,24 +2919,8 @@ function canManageGroups(){
     });
     function toggleSidebar(){sidebar.classList.toggle("open")}
 
-    function updateTabBadges(){
-      const userBadge=document.getElementById("usersTabBadge");
-      const groupBadge=document.getElementById("groupsTabBadge");
-      const userTotal=Object.values(unreadPrivate||{}).reduce(function(total,value){return total+(Number(value)||0);},0);
-      const groupTotal=Object.values(unreadGroups||{}).reduce(function(total,value){return total+(Number(value)||0);},0);
-      if(userBadge){
-        userBadge.textContent=userTotal>99?"99+":String(userTotal);
-        userBadge.classList.toggle("show", userTotal>0);
-      }
-      if(groupBadge){
-        groupBadge.textContent=groupTotal>99?"99+":String(groupTotal);
-        groupBadge.classList.toggle("show", groupTotal>0);
-      }
-    }
-
     function switchTab(tab){
       activeTab=tab; searchInput.value="";
-      updateTabBadges();
       if(tab==="users"){
         usersPanel.style.display="block"; groupsPanel.style.display="none";
         usersTabBtn.classList.add("active"); groupsTabBtn.classList.remove("active");
@@ -2968,22 +2981,18 @@ function canManageGroups(){
         unreadGroups[id] = 0;
         renderGroups();
       }
-
-      updateTabBadges();
     }
 
     function addUnreadPrivate(userId, amount){
       if(!userId)return;
       unreadPrivate[userId]=(unreadPrivate[userId]||0)+(amount||1);
       renderUsers();
-      updateTabBadges();
     }
 
     function addUnreadGroup(groupId, amount){
       if(!groupId)return;
       unreadGroups[groupId]=(unreadGroups[groupId]||0)+(amount||1);
       renderGroups();
-      updateTabBadges();
     }
 
     async function refreshUnreadBadges(){
@@ -3031,7 +3040,6 @@ function canManageGroups(){
         });
       }
 
-      updateTabBadges();
       renderUsers();
       renderGroups();
     }
@@ -3307,15 +3315,6 @@ function canManageGroups(){
     }
 
     async function selectUser(userId){
-      const alreadyOpen=currentMode==="private" && currentTargetUser && currentTargetUser.id===userId;
-      if(alreadyOpen){
-        unreadPrivate[userId]=0;
-        setLastRead("private", userId);
-        updateTabBadges();
-        sidebar.classList.remove("open");
-        return;
-      }
-
       currentTargetUser=allUsers.find(u=>u.id===userId);
       if(!currentTargetUser)return;
 
@@ -3341,19 +3340,10 @@ function canManageGroups(){
       await loadPrivateMessages();
       setLastRead("private", currentTargetUser.id);
       unreadPrivate[currentTargetUser.id]=0;
-      updateTabBadges();
+      renderUsers();
     }
 
     async function selectGroup(groupId){
-      const alreadyOpen=currentMode==="group" && currentGroup && currentGroup.id===groupId;
-      if(alreadyOpen){
-        unreadGroups[groupId]=0;
-        setLastRead("group", groupId);
-        updateTabBadges();
-        sidebar.classList.remove("open");
-        return;
-      }
-
       currentGroup=allGroups.find(g=>g.id===groupId);
       if(!currentGroup)return;
 
@@ -3378,7 +3368,7 @@ function canManageGroups(){
       await loadGroupMessages();
       setLastRead("group", currentGroup.id);
       unreadGroups[currentGroup.id]=0;
-      updateTabBadges();
+      renderGroups();
     }
 
     async function loadPrivateMessages(){
@@ -3526,13 +3516,9 @@ function canManageGroups(){
         return `<button type="button" class="reaction-chip ${item.mine ? "me" : ""}" onclick="toggleReaction('${mode}', ${id}, '${item.emoji.replace(/'/g,"\\'")}')">${item.emoji}<span class="count">${item.count}</span></button>`;
       }).join("");
 
-      const addButton = canReact
-        ? `<button type="button" class="reaction-add-btn" onclick="openReactionPicker('${mode}', ${id}, event)">➕</button>`
-        : "";
+      if(!chips) return "";
 
-      if(!chips && !addButton) return "";
-
-      return `<div class="reaction-row">${chips}${addButton}</div>`;
+      return `<div class="reaction-row">${chips}</div>`;
     }
 
     function redrawMessagesKeepScroll(){
@@ -3739,6 +3725,17 @@ function canManageGroups(){
       messagesDiv.appendChild(div);
     }
 
+    function messageActionsHtml(data, deleted, pending){
+      if(pending) return "";
+      const canEdit=currentUser&&data.username===currentUser.username&&!deleted;
+      const canReact=currentUser&&data.username!==currentUser.username&&!deleted;
+      return `
+        ${!deleted?`<button class="mini-btn" title="Reply" onclick='setReply(${JSON.stringify(packMsg(data))})'>${iconReply()}</button>`:""}
+        ${canReact?`<button type="button" class="mini-btn reaction-top-btn" title="Emoji" onclick="openReactionPicker('${currentMode}', ${data.id}, event)">➕</button>`:""}
+        ${canEdit?`<button class="mini-btn" title="Edit" onclick='setEdit(${JSON.stringify(packMsg(data))})'>${iconEdit()}</button><button class="mini-btn delete" title="Hapus" onclick='deleteMessage(${JSON.stringify(packMsg(data))})'>${iconDelete()}</button>`:""}
+      `;
+    }
+
     function renderMessage(data){
       if(isGroupJoinSystemMessage(data)){
         const existing=document.querySelector(`[data-msg-id="${currentMode}-${data.id}"]`);
@@ -3757,14 +3754,14 @@ function canManageGroups(){
       const senderAvatar = data.avatar_url || avatarSrc(sender, data.display_name || data.username);
       const senderRole = sender?.role || "";
       const deleted=data.is_deleted===true;
-      const canEdit=currentUser&&data.username===currentUser.username&&!deleted;
+      const pending=data.is_optimistic===true;
       const replyHtml=data.reply_to_text?`<div class="reply-box"><div class="reply-name">${escapeHtml(displayReplyName(data.reply_to_display_name||"Pesan"))}</div><div>${escapeHtml(shortText(data.reply_to_text,90))}</div></div>`:"";
       const fileHtml=(!deleted&&data.file_url)?renderFileHtml(data):"";
       const edited=data.edited_at&&!deleted?" • diedit":"";
       const emojiOnly = !deleted && isEmojiOnlyMessage(data.message || "");
       const textClass = emojiOnly ? `text emoji-only ${emojiOnlySizeClass(data.message || "")}` : "text";
-      const canReactToMessage = currentUser && data.username !== currentUser.username;
-      const reactionHtml = renderReactionRow(currentMode, data.id, deleted, canReactToMessage);
+      const canReactToMessage = currentUser && data.username !== currentUser.username && !pending;
+      const reactionHtml = pending ? "" : renderReactionRow(currentMode, data.id, deleted, canReactToMessage);
 
       div.innerHTML=`
         <div class="msg-top">
@@ -3777,10 +3774,7 @@ function canManageGroups(){
               </div>
             </div>
           </div>
-          <div class="msg-actions">
-            ${!deleted?`<button class="mini-btn" title="Reply" onclick='setReply(${JSON.stringify(packMsg(data))})'>${iconReply()}</button>`:""}
-            ${canEdit?`<button class="mini-btn" title="Edit" onclick='setEdit(${JSON.stringify(packMsg(data))})'>${iconEdit()}</button><button class="mini-btn delete" title="Hapus" onclick='deleteMessage(${JSON.stringify(packMsg(data))})'>${iconDelete()}</button>`:""}
-          </div>
+          <div class="msg-actions">${messageActionsHtml(data, deleted, pending)}</div>
         </div>
         ${replyHtml}
         <div class="${textClass}">${renderMessageText(data.message || "", deleted)}</div>
@@ -3791,6 +3785,49 @@ function canManageGroups(){
         </div>
       `;
       messagesDiv.appendChild(div);
+    }
+
+    function confirmOptimisticMessage(mode, tempId, savedMsg){
+      if(!tempId || !savedMsg) return false;
+      const oldKey = mode + "-" + tempId;
+      const newKey = mode + "-" + savedMsg.id;
+      const el = document.querySelector(`[data-msg-id="${oldKey}"]`);
+      let changed = false;
+
+      currentMessagesCache = (currentMessagesCache || []).map(function(msg){
+        if(msg.id === tempId){
+          changed = true;
+          return savedMsg;
+        }
+        return msg;
+      });
+
+      if(el){
+        el.dataset.msgId = newKey;
+        const actions = el.querySelector(".msg-actions");
+        if(actions) actions.innerHTML = messageActionsHtml(savedMsg, savedMsg.is_deleted===true, false);
+        const time = el.querySelector(".time");
+        if(time) time.textContent = formatTime(savedMsg.created_at) + (savedMsg.edited_at && !savedMsg.is_deleted ? " • diedit" : "");
+        return true;
+      }
+
+      return changed;
+    }
+
+    function findMatchingOptimistic(mode, savedMsg){
+      if(!savedMsg || !currentUser || savedMsg.username !== currentUser.username) return null;
+      const now = new Date(savedMsg.created_at || Date.now()).getTime();
+      const list = currentMessagesCache || [];
+      for(let i=list.length-1;i>=0;i--){
+        const msg = list[i];
+        if(!msg || msg.is_optimistic !== true) continue;
+        if(mode === "group" && msg.group_id !== savedMsg.group_id) continue;
+        if(mode === "private" && msg.conversation_key !== savedMsg.conversation_key) continue;
+        if((msg.message || "") !== (savedMsg.message || "")) continue;
+        const diff = Math.abs(now - new Date(msg.created_at || Date.now()).getTime());
+        if(diff < 30000) return msg.id;
+      }
+      return null;
     }
 
     function findUserByMessage(data){
