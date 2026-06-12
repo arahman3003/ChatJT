@@ -1982,6 +1982,40 @@
 </style>
 
 
+
+<style id="tab-unread-badge-fix">
+  .tab-btn{
+    position:relative !important;
+  }
+
+  .tab-badge{
+    position:absolute !important;
+    right:9px !important;
+    top:-7px !important;
+    min-width:20px !important;
+    height:20px !important;
+    padding:0 6px !important;
+    border-radius:999px !important;
+    background:#ef4444 !important;
+    color:#fff !important;
+    font-size:11px !important;
+    font-weight:900 !important;
+    line-height:20px !important;
+    text-align:center !important;
+    display:none !important;
+    box-shadow:0 8px 18px rgba(239,68,68,.45) !important;
+    border:1px solid rgba(255,255,255,.25) !important;
+    z-index:5 !important;
+    pointer-events:none !important;
+  }
+
+  .tab-badge.show{
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+  }
+</style>
+
 <style id="chat-header-avatar-title-fix">
   .chat-header-main{
     display:flex !important;
@@ -2122,8 +2156,8 @@
       </div>
 
       <div class="tabs">
-        <button class="tab-btn active" id="usersTabBtn" onclick="switchTab('users')">User</button>
-        <button class="tab-btn" id="groupsTabBtn" onclick="switchTab('groups')">Grup</button>
+        <button class="tab-btn active" id="usersTabBtn" onclick="switchTab('users')">User <span class="tab-badge" id="usersTabBadge">0</span></button>
+        <button class="tab-btn" id="groupsTabBtn" onclick="switchTab('groups')">Grup <span class="tab-badge" id="groupsTabBadge">0</span></button>
       </div>
 
       <div class="search-box">
@@ -2886,6 +2920,7 @@ function canManageGroups(){
 
     function switchTab(tab){
       activeTab=tab; searchInput.value="";
+      updateTabUnreadBadges();
       if(tab==="users"){
         usersPanel.style.display="block"; groupsPanel.style.display="none";
         usersTabBtn.classList.add("active"); groupsTabBtn.classList.remove("active");
@@ -2958,6 +2993,25 @@ function canManageGroups(){
       if(!groupId)return;
       unreadGroups[groupId]=(unreadGroups[groupId]||0)+(amount||1);
       renderGroups();
+    }
+
+    function getUnreadTotal(map){
+      return Object.values(map || {}).reduce(function(total, value){
+        const n = Number(value) || 0;
+        return total + (n > 0 ? n : 0);
+      }, 0);
+    }
+
+    function setTabBadge(el, count){
+      if(!el)return;
+      const n = Number(count) || 0;
+      el.textContent = n > 99 ? "99+" : String(n);
+      el.classList.toggle("show", n > 0);
+    }
+
+    function updateTabUnreadBadges(){
+      setTabBadge(document.getElementById("usersTabBadge"), getUnreadTotal(unreadPrivate));
+      setTabBadge(document.getElementById("groupsTabBadge"), getUnreadTotal(unreadGroups));
     }
 
     async function refreshUnreadBadges(){
@@ -3137,6 +3191,7 @@ function canManageGroups(){
     }
 
     function renderUsers(){
+      updateTabUnreadBadges();
       const keyword=searchInput.value.trim().toLowerCase();
 
       // Tanpa search: tampilkan hanya user yang sudah pernah chat.
@@ -3214,6 +3269,7 @@ function canManageGroups(){
     }
 
     function renderGroups(){
+      updateTabUnreadBadges();
       const keyword=searchInput.value.trim().toLowerCase();
       const allowedGroupIds = new Set(myGroupIds || []);
       const filtered=allGroups.filter(function(g){
@@ -3922,108 +3978,34 @@ function canManageGroups(){
       };
     }
 
-    function removeMessageByTempId(mode, tempId){
-      currentMessagesCache = (currentMessagesCache || []).filter(function(msg){ return msg.id !== tempId; });
-      const el = document.querySelector(`[data-msg-id="${mode}-${tempId}"]`);
-      if(el) el.remove();
-    }
-
-    function addInstantMessage(mode, payload){
-      const tempId = "tmp_" + Date.now() + "_" + Math.random().toString(16).slice(2);
-      const tempMsg = Object.assign({}, payload, {
-        id: tempId,
-        created_at: new Date().toISOString(),
-        is_optimistic: true,
-        is_deleted: false,
-        edited_at: null
-      });
-      const empty=messagesDiv.querySelector(".empty");
-      if(empty) messagesDiv.innerHTML="";
-      currentMessagesCache = currentMessagesCache || [];
-      currentMessagesCache.push(tempMsg);
-      renderMessage(tempMsg);
-      messagesDiv.scrollTop=messagesDiv.scrollHeight;
-      return tempId;
-    }
-
     async function sendGroupMessage(message){
       if(!currentGroup){showToast("Pilih grup dulu.", "warn", "Perhatian");return}
-      const replyData = replyPayload();
-      const hasFile = !!selectedFile;
-      let tempId = null;
-
-      if(!hasFile){
-        tempId = addInstantMessage("group", {
-          group_id:currentGroup.id,user_id:currentUser.id,username:currentUser.username,display_name:currentUser.display_name,message,
-          file_url:null,file_name:null,file_type:null,avatar_url:currentUser.avatar_url || null,...replyData
-        });
-      }
-
-      messageInput.value="";
-      cancelReply();
-
       try{
         const file=await uploadFile();
-        const payload={
+        messageInput.value="";
+        const {error}=await supabaseClient.from("messages").insert([{
           group_id:currentGroup.id,user_id:currentUser.id,username:currentUser.username,display_name:currentUser.display_name,message,
-          file_url:file.url,file_name:file.name,file_type:file.type,avatar_url:currentUser.avatar_url || null,...replyData
-        };
-        const {data,error}=await supabaseClient.from("messages").insert([payload]).select("*").single();
+          file_url:file.url,file_name:file.name,file_type:file.type,avatar_url:currentUser.avatar_url || null,...replyPayload()
+        }]);
         if(error)throw error;
-        if(tempId) confirmOptimisticMessage("group", tempId, data);
-        else{
-          const empty=messagesDiv.querySelector(".empty"); if(empty)messagesDiv.innerHTML="";
-          currentMessagesCache = currentMessagesCache || [];
-          currentMessagesCache.push(data);
-          renderMessage(data);
-          messagesDiv.scrollTop=messagesDiv.scrollHeight;
-        }
-        clearFile();
-      }catch(err){
-        if(tempId) removeMessageByTempId("group", tempId);
-        showToast("Gagal mengirim pesan grup: "+err.message, "error", "Gagal");
-      }
+        cancelReply(); clearFile();
+      }catch(err){showToast("Gagal mengirim pesan grup: "+err.message, "error", "Gagal")}
     }
 
     async function sendPrivateMessage(message){
       if(!currentTargetUser){showToast("Pilih user dulu.", "warn", "Perhatian");return}
-      const key=makeConversationKey(currentUser.id,currentTargetUser.id);
-      const replyData = replyPayload();
-      const hasFile = !!selectedFile;
-      let tempId = null;
-
-      if(!hasFile){
-        tempId = addInstantMessage("private", {
-          conversation_key:key,sender_id:currentUser.id,receiver_id:currentTargetUser.id,user_id:currentUser.id,username:currentUser.username,display_name:currentUser.display_name,message,
-          file_url:null,file_name:null,file_type:null,avatar_url:currentUser.avatar_url || null,...replyData
-        });
-      }
-
-      messageInput.value="";
-      cancelReply();
-
       try{
         const file=await uploadFile();
-        const payload={
+        const key=makeConversationKey(currentUser.id,currentTargetUser.id);
+        messageInput.value="";
+        const {error}=await supabaseClient.from("private_messages").insert([{
           conversation_key:key,sender_id:currentUser.id,receiver_id:currentTargetUser.id,username:currentUser.username,display_name:currentUser.display_name,message,
-          file_url:file.url,file_name:file.name,file_type:file.type,avatar_url:currentUser.avatar_url || null,...replyData
-        };
-        const {data,error}=await supabaseClient.from("private_messages").insert([payload]).select("*").single();
+          file_url:file.url,file_name:file.name,file_type:file.type,avatar_url:currentUser.avatar_url || null,...replyPayload()
+        }]);
         if(error)throw error;
-        if(tempId) confirmOptimisticMessage("private", tempId, data);
-        else{
-          const empty=messagesDiv.querySelector(".empty"); if(empty)messagesDiv.innerHTML="";
-          currentMessagesCache = currentMessagesCache || [];
-          currentMessagesCache.push(data);
-          renderMessage(data);
-          messagesDiv.scrollTop=messagesDiv.scrollHeight;
-        }
-        clearFile();
+        cancelReply(); clearFile();
         if(!visibleUsers.some(u=>u.id===currentTargetUser.id)){visibleUsers.push(currentTargetUser);renderUsers()}
-      }catch(err){
-        if(tempId) removeMessageByTempId("private", tempId);
-        showToast("Gagal mengirim pesan pribadi: "+err.message, "error", "Gagal");
-      }
+      }catch(err){showToast("Gagal mengirim pesan pribadi: "+err.message, "error", "Gagal")}
     }
 
     function openImagePopup(url){
@@ -4590,19 +4572,7 @@ function canManageGroups(){
           renderGroups();
 
           if(currentMode==="group"&&currentGroup&&msg.group_id===currentGroup.id){
-            if(currentMessagesCache.some(function(item){ return item.id === msg.id; })){
-              markConversationRead("group", currentGroup.id, [msg]);
-              return;
-            }
-            const tempId = findMatchingOptimistic("group", msg);
-            if(tempId){
-              confirmOptimisticMessage("group", tempId, msg);
-              markConversationRead("group", currentGroup.id, [msg]);
-              return;
-            }
             const empty=messagesDiv.querySelector(".empty"); if(empty)messagesDiv.innerHTML="";
-            currentMessagesCache = currentMessagesCache || [];
-            currentMessagesCache.push(msg);
             renderMessage(msg);
             messagesDiv.scrollTop=messagesDiv.scrollHeight;
             markConversationRead("group", currentGroup.id, [msg]);
@@ -4625,21 +4595,7 @@ function canManageGroups(){
           const otherUser=allUsers.find(u=>u.id===otherId);
           if(otherUser&&!visibleUsers.some(u=>u.id===otherUser.id)){visibleUsers.push(otherUser)}
           if(currentMode==="private"&&currentTargetUser&&msg.conversation_key===makeConversationKey(currentUser.id,currentTargetUser.id)){
-            if(currentMessagesCache.some(function(item){ return item.id === msg.id; })){
-              markConversationRead("private", currentTargetUser.id, [msg]);
-              renderUsers();
-              return;
-            }
-            const tempId = findMatchingOptimistic("private", msg);
-            if(tempId){
-              confirmOptimisticMessage("private", tempId, msg);
-              markConversationRead("private", currentTargetUser.id, [msg]);
-              renderUsers();
-              return;
-            }
             const empty=messagesDiv.querySelector(".empty"); if(empty)messagesDiv.innerHTML="";
-            currentMessagesCache = currentMessagesCache || [];
-            currentMessagesCache.push(msg);
             renderMessage(msg);
             messagesDiv.scrollTop=messagesDiv.scrollHeight;
             markConversationRead("private", currentTargetUser.id, [msg]);
