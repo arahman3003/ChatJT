@@ -3694,6 +3694,15 @@ function canManageGroups(){
       messagesDiv.appendChild(div);
     }
 
+    function messageActionsHtml(data, deleted, pending){
+      if(pending) return "";
+      const canEdit=currentUser&&data.username===currentUser.username&&!deleted;
+      return `
+        ${!deleted?`<button class="mini-btn" title="Reply" onclick='setReply(${JSON.stringify(packMsg(data))})'>${iconReply()}</button>`:""}
+        ${canEdit?`<button class="mini-btn" title="Edit" onclick='setEdit(${JSON.stringify(packMsg(data))})'>${iconEdit()}</button><button class="mini-btn delete" title="Hapus" onclick='deleteMessage(${JSON.stringify(packMsg(data))})'>${iconDelete()}</button>`:""}
+      `;
+    }
+
     function renderMessage(data){
       if(isGroupJoinSystemMessage(data)){
         const existing=document.querySelector(`[data-msg-id="${currentMode}-${data.id}"]`);
@@ -3713,14 +3722,13 @@ function canManageGroups(){
       const senderRole = sender?.role || "";
       const deleted=data.is_deleted===true;
       const pending=data.is_optimistic===true;
-      const canEdit=currentUser&&data.username===currentUser.username&&!deleted&&!pending;
       const replyHtml=data.reply_to_text?`<div class="reply-box"><div class="reply-name">${escapeHtml(displayReplyName(data.reply_to_display_name||"Pesan"))}</div><div>${escapeHtml(shortText(data.reply_to_text,90))}</div></div>`:"";
       const fileHtml=(!deleted&&data.file_url)?renderFileHtml(data):"";
-      const edited=data.edited_at&&!deleted?" • diedit":(pending?" • mengirim":"");
+      const edited=data.edited_at&&!deleted?" • diedit":"";
       const emojiOnly = !deleted && isEmojiOnlyMessage(data.message || "");
       const textClass = emojiOnly ? `text emoji-only ${emojiOnlySizeClass(data.message || "")}` : "text";
       const canReactToMessage = currentUser && data.username !== currentUser.username && !pending;
-      const reactionHtml = renderReactionRow(currentMode, data.id, deleted, canReactToMessage);
+      const reactionHtml = pending ? "" : renderReactionRow(currentMode, data.id, deleted, canReactToMessage);
 
       div.innerHTML=`
         <div class="msg-top">
@@ -3733,10 +3741,7 @@ function canManageGroups(){
               </div>
             </div>
           </div>
-          <div class="msg-actions">
-            ${!deleted?`<button class="mini-btn" title="Reply" onclick='setReply(${JSON.stringify(packMsg(data))})'>${iconReply()}</button>`:""}
-            ${canEdit?`<button class="mini-btn" title="Edit" onclick='setEdit(${JSON.stringify(packMsg(data))})'>${iconEdit()}</button><button class="mini-btn delete" title="Hapus" onclick='deleteMessage(${JSON.stringify(packMsg(data))})'>${iconDelete()}</button>`:""}
-          </div>
+          <div class="msg-actions">${messageActionsHtml(data, deleted, pending)}</div>
         </div>
         ${replyHtml}
         <div class="${textClass}">${renderMessageText(data.message || "", deleted)}</div>
@@ -3747,6 +3752,49 @@ function canManageGroups(){
         </div>
       `;
       messagesDiv.appendChild(div);
+    }
+
+    function confirmOptimisticMessage(mode, tempId, savedMsg){
+      if(!tempId || !savedMsg) return false;
+      const oldKey = mode + "-" + tempId;
+      const newKey = mode + "-" + savedMsg.id;
+      const el = document.querySelector(`[data-msg-id="${oldKey}"]`);
+      let changed = false;
+
+      currentMessagesCache = (currentMessagesCache || []).map(function(msg){
+        if(msg.id === tempId){
+          changed = true;
+          return savedMsg;
+        }
+        return msg;
+      });
+
+      if(el){
+        el.dataset.msgId = newKey;
+        const actions = el.querySelector(".msg-actions");
+        if(actions) actions.innerHTML = messageActionsHtml(savedMsg, savedMsg.is_deleted===true, false);
+        const time = el.querySelector(".time");
+        if(time) time.textContent = formatTime(savedMsg.created_at) + (savedMsg.edited_at && !savedMsg.is_deleted ? " • diedit" : "");
+        return true;
+      }
+
+      return changed;
+    }
+
+    function findMatchingOptimistic(mode, savedMsg){
+      if(!savedMsg || !currentUser || savedMsg.username !== currentUser.username) return null;
+      const now = new Date(savedMsg.created_at || Date.now()).getTime();
+      const list = currentMessagesCache || [];
+      for(let i=list.length-1;i>=0;i--){
+        const msg = list[i];
+        if(!msg || msg.is_optimistic !== true) continue;
+        if(mode === "group" && msg.group_id !== savedMsg.group_id) continue;
+        if(mode === "private" && msg.conversation_key !== savedMsg.conversation_key) continue;
+        if((msg.message || "") !== (savedMsg.message || "")) continue;
+        const diff = Math.abs(now - new Date(msg.created_at || Date.now()).getTime());
+        if(diff < 30000) return msg.id;
+      }
+      return null;
     }
 
     function findUserByMessage(data){
@@ -3874,106 +3922,107 @@ function canManageGroups(){
       };
     }
 
-    function addOptimisticMessage(mode, message){
-      if(!message) return null;
-
-      const tempId = "temp_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
-      const now = new Date().toISOString();
-      const base = {
-        id: tempId,
-        username: currentUser.username,
-        display_name: currentUser.display_name,
-        message: message,
-        file_url: null,
-        file_name: null,
-        file_type: null,
-        avatar_url: currentUser.avatar_url || null,
-        created_at: now,
-        is_deleted: false,
-        is_optimistic: true,
-        ...replyPayload()
-      };
-
-      const msg = mode === "group"
-        ? { ...base, group_id: currentGroup.id, user_id: currentUser.id }
-        : { ...base, conversation_key: makeConversationKey(currentUser.id, currentTargetUser.id), sender_id: currentUser.id, receiver_id: currentTargetUser.id };
-
-      const empty = messagesDiv.querySelector(".empty");
-      if(empty) messagesDiv.innerHTML = "";
-
-      currentMessagesCache.push(msg);
-      renderMessage(msg);
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
-
-      if(mode === "group" && currentGroup){
-        lastGroupPreview[currentGroup.id] = makePreviewText(msg, "group");
-        renderGroups();
-      }
-
-      if(mode === "private" && currentTargetUser){
-        lastPrivatePreview[currentTargetUser.id] = makePreviewText(msg, "private");
-        renderUsers();
-      }
-
-      return { id: tempId, mode: mode };
-    }
-
-    function removeOptimisticMessage(temp){
-      if(!temp) return;
-      currentMessagesCache = (currentMessagesCache || []).filter(function(msg){ return msg.id !== temp.id; });
-      const el = document.querySelector(`[data-msg-id="${temp.mode}-${temp.id}"]`);
+    function removeMessageByTempId(mode, tempId){
+      currentMessagesCache = (currentMessagesCache || []).filter(function(msg){ return msg.id !== tempId; });
+      const el = document.querySelector(`[data-msg-id="${mode}-${tempId}"]`);
       if(el) el.remove();
     }
 
-    function commitSentMessage(temp, savedMsg){
-      if(!savedMsg) return;
-      removeOptimisticMessage(temp);
-      if(!(currentMessagesCache || []).some(function(msg){ return msg.id === savedMsg.id; })){
-        currentMessagesCache.push(savedMsg);
-      }
-      const empty = messagesDiv.querySelector(".empty");
-      if(empty) messagesDiv.innerHTML = "";
-      renderMessage(savedMsg);
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    function addInstantMessage(mode, payload){
+      const tempId = "tmp_" + Date.now() + "_" + Math.random().toString(16).slice(2);
+      const tempMsg = Object.assign({}, payload, {
+        id: tempId,
+        created_at: new Date().toISOString(),
+        is_optimistic: true,
+        is_deleted: false,
+        edited_at: null
+      });
+      const empty=messagesDiv.querySelector(".empty");
+      if(empty) messagesDiv.innerHTML="";
+      currentMessagesCache = currentMessagesCache || [];
+      currentMessagesCache.push(tempMsg);
+      renderMessage(tempMsg);
+      messagesDiv.scrollTop=messagesDiv.scrollHeight;
+      return tempId;
     }
 
     async function sendGroupMessage(message){
       if(!currentGroup){showToast("Pilih grup dulu.", "warn", "Perhatian");return}
-      const optimistic = message ? addOptimisticMessage("group", message) : null;
+      const replyData = replyPayload();
+      const hasFile = !!selectedFile;
+      let tempId = null;
+
+      if(!hasFile){
+        tempId = addInstantMessage("group", {
+          group_id:currentGroup.id,user_id:currentUser.id,username:currentUser.username,display_name:currentUser.display_name,message,
+          file_url:null,file_name:null,file_type:null,avatar_url:currentUser.avatar_url || null,...replyData
+        });
+      }
+
       messageInput.value="";
+      cancelReply();
+
       try{
         const file=await uploadFile();
-        const {data,error}=await supabaseClient.from("messages").insert([{
+        const payload={
           group_id:currentGroup.id,user_id:currentUser.id,username:currentUser.username,display_name:currentUser.display_name,message,
-          file_url:file.url,file_name:file.name,file_type:file.type,avatar_url:currentUser.avatar_url || null,...replyPayload()
-        }]).select("*").single();
+          file_url:file.url,file_name:file.name,file_type:file.type,avatar_url:currentUser.avatar_url || null,...replyData
+        };
+        const {data,error}=await supabaseClient.from("messages").insert([payload]).select("*").single();
         if(error)throw error;
-        commitSentMessage(optimistic, data);
-        cancelReply(); clearFile();
+        if(tempId) confirmOptimisticMessage("group", tempId, data);
+        else{
+          const empty=messagesDiv.querySelector(".empty"); if(empty)messagesDiv.innerHTML="";
+          currentMessagesCache = currentMessagesCache || [];
+          currentMessagesCache.push(data);
+          renderMessage(data);
+          messagesDiv.scrollTop=messagesDiv.scrollHeight;
+        }
+        clearFile();
       }catch(err){
-        removeOptimisticMessage(optimistic);
-        showToast("Gagal mengirim pesan grup: "+err.message, "error", "Gagal")
+        if(tempId) removeMessageByTempId("group", tempId);
+        showToast("Gagal mengirim pesan grup: "+err.message, "error", "Gagal");
       }
     }
 
     async function sendPrivateMessage(message){
       if(!currentTargetUser){showToast("Pilih user dulu.", "warn", "Perhatian");return}
-      const optimistic = message ? addOptimisticMessage("private", message) : null;
       const key=makeConversationKey(currentUser.id,currentTargetUser.id);
+      const replyData = replyPayload();
+      const hasFile = !!selectedFile;
+      let tempId = null;
+
+      if(!hasFile){
+        tempId = addInstantMessage("private", {
+          conversation_key:key,sender_id:currentUser.id,receiver_id:currentTargetUser.id,user_id:currentUser.id,username:currentUser.username,display_name:currentUser.display_name,message,
+          file_url:null,file_name:null,file_type:null,avatar_url:currentUser.avatar_url || null,...replyData
+        });
+      }
+
       messageInput.value="";
+      cancelReply();
+
       try{
         const file=await uploadFile();
-        const {data,error}=await supabaseClient.from("private_messages").insert([{
+        const payload={
           conversation_key:key,sender_id:currentUser.id,receiver_id:currentTargetUser.id,username:currentUser.username,display_name:currentUser.display_name,message,
-          file_url:file.url,file_name:file.name,file_type:file.type,avatar_url:currentUser.avatar_url || null,...replyPayload()
-        }]).select("*").single();
+          file_url:file.url,file_name:file.name,file_type:file.type,avatar_url:currentUser.avatar_url || null,...replyData
+        };
+        const {data,error}=await supabaseClient.from("private_messages").insert([payload]).select("*").single();
         if(error)throw error;
-        commitSentMessage(optimistic, data);
-        cancelReply(); clearFile();
+        if(tempId) confirmOptimisticMessage("private", tempId, data);
+        else{
+          const empty=messagesDiv.querySelector(".empty"); if(empty)messagesDiv.innerHTML="";
+          currentMessagesCache = currentMessagesCache || [];
+          currentMessagesCache.push(data);
+          renderMessage(data);
+          messagesDiv.scrollTop=messagesDiv.scrollHeight;
+        }
+        clearFile();
         if(!visibleUsers.some(u=>u.id===currentTargetUser.id)){visibleUsers.push(currentTargetUser);renderUsers()}
       }catch(err){
-        removeOptimisticMessage(optimistic);
-        showToast("Gagal mengirim pesan pribadi: "+err.message, "error", "Gagal")
+        if(tempId) removeMessageByTempId("private", tempId);
+        showToast("Gagal mengirim pesan pribadi: "+err.message, "error", "Gagal");
       }
     }
 
@@ -4541,7 +4590,19 @@ function canManageGroups(){
           renderGroups();
 
           if(currentMode==="group"&&currentGroup&&msg.group_id===currentGroup.id){
+            if(currentMessagesCache.some(function(item){ return item.id === msg.id; })){
+              markConversationRead("group", currentGroup.id, [msg]);
+              return;
+            }
+            const tempId = findMatchingOptimistic("group", msg);
+            if(tempId){
+              confirmOptimisticMessage("group", tempId, msg);
+              markConversationRead("group", currentGroup.id, [msg]);
+              return;
+            }
             const empty=messagesDiv.querySelector(".empty"); if(empty)messagesDiv.innerHTML="";
+            currentMessagesCache = currentMessagesCache || [];
+            currentMessagesCache.push(msg);
             renderMessage(msg);
             messagesDiv.scrollTop=messagesDiv.scrollHeight;
             markConversationRead("group", currentGroup.id, [msg]);
@@ -4564,7 +4625,21 @@ function canManageGroups(){
           const otherUser=allUsers.find(u=>u.id===otherId);
           if(otherUser&&!visibleUsers.some(u=>u.id===otherUser.id)){visibleUsers.push(otherUser)}
           if(currentMode==="private"&&currentTargetUser&&msg.conversation_key===makeConversationKey(currentUser.id,currentTargetUser.id)){
+            if(currentMessagesCache.some(function(item){ return item.id === msg.id; })){
+              markConversationRead("private", currentTargetUser.id, [msg]);
+              renderUsers();
+              return;
+            }
+            const tempId = findMatchingOptimistic("private", msg);
+            if(tempId){
+              confirmOptimisticMessage("private", tempId, msg);
+              markConversationRead("private", currentTargetUser.id, [msg]);
+              renderUsers();
+              return;
+            }
             const empty=messagesDiv.querySelector(".empty"); if(empty)messagesDiv.innerHTML="";
+            currentMessagesCache = currentMessagesCache || [];
+            currentMessagesCache.push(msg);
             renderMessage(msg);
             messagesDiv.scrollTop=messagesDiv.scrollHeight;
             markConversationRead("private", currentTargetUser.id, [msg]);
