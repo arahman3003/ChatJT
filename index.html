@@ -2400,38 +2400,6 @@
     let activeReactionTarget=null;
     const REACTION_OPTIONS=["👍","😂","❤️","😮","😢","🔥"];
     let selectedFile=null, replyTo=null, editingMessage=null;
-    const optimisticMessageIds = new Set();
-
-    function addOptimisticMessage(mode, tempMessage){
-      const empty = messagesDiv.querySelector(".empty");
-      if(empty) messagesDiv.innerHTML = "";
-      optimisticMessageIds.add(mode + "-" + tempMessage.id);
-      currentMessagesCache = [...(currentMessagesCache || []), tempMessage];
-      renderMessage(tempMessage);
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    }
-
-    function replaceOptimisticMessage(mode, tempId, realMessage){
-      optimisticMessageIds.delete(mode + "-" + tempId);
-      const tempEl = messagesDiv.querySelector(`[data-msg-id="${mode}-${tempId}"]`);
-      if(tempEl) tempEl.remove();
-      currentMessagesCache = (currentMessagesCache || []).filter(function(msg){ return msg.id !== tempId; });
-      if(realMessage){
-        currentMessagesCache.push(realMessage);
-        renderMessage(realMessage);
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-      }
-    }
-
-    function removeOptimisticMessage(mode, tempId){
-      optimisticMessageIds.delete(mode + "-" + tempId);
-      const tempEl = messagesDiv.querySelector(`[data-msg-id="${mode}-${tempId}"]`);
-      if(tempEl) tempEl.remove();
-      currentMessagesCache = (currentMessagesCache || []).filter(function(msg){ return msg.id !== tempId; });
-      if(!(currentMessagesCache || []).length){
-        messagesDiv.innerHTML = `<p class="empty">Belum ada pesan.</p>`;
-      }
-    }
 
     function hideLoading(){
       if(loadingOverlay) loadingOverlay.style.display = "none";
@@ -2897,8 +2865,6 @@ function canManageGroups(){
     }
 
     async function logout(){
-      saveActiveReadState();
-      localStorage.setItem("forum_last_close", new Date().toISOString());
       try {
         await setMyOnlineStatus(false);
       } catch(e) {}
@@ -2907,7 +2873,6 @@ function canManageGroups(){
     }
 
     window.addEventListener("beforeunload", function(){
-      saveActiveReadState();
       localStorage.setItem("forum_last_close", new Date().toISOString());
     });
 
@@ -2938,33 +2903,28 @@ function canManageGroups(){
       return "forum_read_" + currentUser.id + "_" + type + "_" + id;
     }
 
-    function getReadUsernameKey(type, id){
-      return "forum_read_user_" + (currentUser.username || currentUser.id) + "_" + type + "_" + id;
-    }
-
-    function getReadBaseline(){
-      if(!currentUser || !currentUser.id) return "1970-01-01T00:00:00.000Z";
-
-      const key = "forum_read_baseline_" + currentUser.id;
-      let baseline = localStorage.getItem(key);
-
-      if(!baseline){
-        // Saat fitur read-state pertama kali dipakai, jangan munculkan lagi notif lama.
-        // Pesan baru setelah waktu ini tetap akan muncul sebagai notif.
-        baseline = localStorage.getItem("forum_last_close") || new Date().toISOString();
-        localStorage.setItem(key, baseline);
-      }
-
-      return baseline;
-    }
-
     function getLastRead(type, id){
-      return localStorage.getItem(getReadKey(type, id))
-        || localStorage.getItem(getReadUsernameKey(type, id))
-        || getReadBaseline();
+      return localStorage.getItem(getReadKey(type, id)) || "1970-01-01T00:00:00.000Z";
     }
 
-    function getLatestMessageTime(messages){
+    function setLastRead(type, id, timestamp){
+      if(!currentUser || !id)return;
+
+      const key = getReadKey(type, id);
+      const oldValue = localStorage.getItem(key) || "1970-01-01T00:00:00.000Z";
+      const nextValue = timestamp || new Date().toISOString();
+
+      const oldTime = new Date(oldValue).getTime() || 0;
+      const nextTime = new Date(nextValue).getTime() || 0;
+
+      // Jangan pernah mundurkan waktu baca.
+      // Pakai waktu created_at pesan dari Supabase supaya notif lama tidak muncul lagi saat login ulang.
+      localStorage.setItem(key, (nextTime > oldTime ? nextValue : oldValue));
+    }
+
+    function markConversationRead(type, id, messages){
+      if(!id)return;
+
       const list = Array.isArray(messages) ? messages : [];
       let latest = null;
 
@@ -2975,42 +2935,7 @@ function canManageGroups(){
         }
       });
 
-      return latest;
-    }
-
-    function setLastRead(type, id, timestamp){
-      if(!currentUser || !id)return;
-
-      const keys = [getReadKey(type, id), getReadUsernameKey(type, id)];
-      const nextValue = timestamp || new Date().toISOString();
-      const nextTime = new Date(nextValue).getTime() || 0;
-
-      keys.forEach(function(key){
-        const oldValue = localStorage.getItem(key) || getReadBaseline();
-        const oldTime = new Date(oldValue).getTime() || 0;
-
-        // Jangan pernah mundurkan waktu baca.
-        // Pakai waktu created_at pesan dari Supabase supaya notif lama tidak muncul lagi saat login ulang.
-        localStorage.setItem(key, (nextTime > oldTime ? nextValue : oldValue));
-      });
-    }
-
-    function saveActiveReadState(){
-      if(!currentUser)return;
-
-      if(currentMode === "private" && currentTargetUser){
-        setLastRead("private", currentTargetUser.id, getLatestMessageTime(currentMessagesCache) || new Date().toISOString());
-      }
-
-      if(currentMode === "group" && currentGroup){
-        setLastRead("group", currentGroup.id, getLatestMessageTime(currentMessagesCache) || new Date().toISOString());
-      }
-    }
-
-    function markConversationRead(type, id, messages){
-      if(!id)return;
-
-      setLastRead(type, id, getLatestMessageTime(messages) || new Date().toISOString());
+      setLastRead(type, id, latest || new Date().toISOString());
 
       if(type === "private"){
         unreadPrivate[id] = 0;
@@ -3787,13 +3712,14 @@ function canManageGroups(){
       const senderAvatar = data.avatar_url || avatarSrc(sender, data.display_name || data.username);
       const senderRole = sender?.role || "";
       const deleted=data.is_deleted===true;
-      const canEdit=currentUser&&data.username===currentUser.username&&!deleted;
+      const pending=data.is_optimistic===true;
+      const canEdit=currentUser&&data.username===currentUser.username&&!deleted&&!pending;
       const replyHtml=data.reply_to_text?`<div class="reply-box"><div class="reply-name">${escapeHtml(displayReplyName(data.reply_to_display_name||"Pesan"))}</div><div>${escapeHtml(shortText(data.reply_to_text,90))}</div></div>`:"";
       const fileHtml=(!deleted&&data.file_url)?renderFileHtml(data):"";
-      const edited=data.edited_at&&!deleted?" • diedit":"";
+      const edited=data.edited_at&&!deleted?" • diedit":(pending?" • mengirim":"");
       const emojiOnly = !deleted && isEmojiOnlyMessage(data.message || "");
       const textClass = emojiOnly ? `text emoji-only ${emojiOnlySizeClass(data.message || "")}` : "text";
-      const canReactToMessage = currentUser && data.username !== currentUser.username;
+      const canReactToMessage = currentUser && data.username !== currentUser.username && !pending;
       const reactionHtml = renderReactionRow(currentMode, data.id, deleted, canReactToMessage);
 
       div.innerHTML=`
@@ -3948,96 +3874,106 @@ function canManageGroups(){
       };
     }
 
-    async function sendGroupMessage(message){
-      if(!currentGroup){showToast("Pilih grup dulu.", "warn", "Perhatian");return}
-      const tempId = "tmp_" + Date.now() + "_" + Math.random().toString(16).slice(2);
-      const replyData = replyPayload();
-      const hasFile = !!selectedFile;
-      const tempMessage = {
+    function addOptimisticMessage(mode, message){
+      if(!message) return null;
+
+      const tempId = "temp_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
+      const now = new Date().toISOString();
+      const base = {
         id: tempId,
-        group_id: currentGroup.id,
-        user_id: currentUser.id,
         username: currentUser.username,
         display_name: currentUser.display_name,
-        message,
+        message: message,
         file_url: null,
-        file_name: hasFile ? selectedFile.name : null,
-        file_type: hasFile ? (selectedFile.type || "application/octet-stream") : null,
+        file_name: null,
+        file_type: null,
         avatar_url: currentUser.avatar_url || null,
-        created_at: new Date().toISOString(),
+        created_at: now,
         is_deleted: false,
-        ...replyData
+        is_optimistic: true,
+        ...replyPayload()
       };
 
-      if(message){
-        messageInput.value="";
-        addOptimisticMessage("group", tempMessage);
-        lastGroupPreview[currentGroup.id]=makePreviewText(tempMessage, "group");
+      const msg = mode === "group"
+        ? { ...base, group_id: currentGroup.id, user_id: currentUser.id }
+        : { ...base, conversation_key: makeConversationKey(currentUser.id, currentTargetUser.id), sender_id: currentUser.id, receiver_id: currentTargetUser.id };
+
+      const empty = messagesDiv.querySelector(".empty");
+      if(empty) messagesDiv.innerHTML = "";
+
+      currentMessagesCache.push(msg);
+      renderMessage(msg);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+      if(mode === "group" && currentGroup){
+        lastGroupPreview[currentGroup.id] = makePreviewText(msg, "group");
         renderGroups();
       }
 
+      if(mode === "private" && currentTargetUser){
+        lastPrivatePreview[currentTargetUser.id] = makePreviewText(msg, "private");
+        renderUsers();
+      }
+
+      return { id: tempId, mode: mode };
+    }
+
+    function removeOptimisticMessage(temp){
+      if(!temp) return;
+      currentMessagesCache = (currentMessagesCache || []).filter(function(msg){ return msg.id !== temp.id; });
+      const el = document.querySelector(`[data-msg-id="${temp.mode}-${temp.id}"]`);
+      if(el) el.remove();
+    }
+
+    function commitSentMessage(temp, savedMsg){
+      if(!savedMsg) return;
+      removeOptimisticMessage(temp);
+      if(!(currentMessagesCache || []).some(function(msg){ return msg.id === savedMsg.id; })){
+        currentMessagesCache.push(savedMsg);
+      }
+      const empty = messagesDiv.querySelector(".empty");
+      if(empty) messagesDiv.innerHTML = "";
+      renderMessage(savedMsg);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    async function sendGroupMessage(message){
+      if(!currentGroup){showToast("Pilih grup dulu.", "warn", "Perhatian");return}
+      const optimistic = message ? addOptimisticMessage("group", message) : null;
+      messageInput.value="";
       try{
         const file=await uploadFile();
-        if(!message) messageInput.value="";
         const {data,error}=await supabaseClient.from("messages").insert([{
           group_id:currentGroup.id,user_id:currentUser.id,username:currentUser.username,display_name:currentUser.display_name,message,
-          file_url:file.url,file_name:file.name,file_type:file.type,avatar_url:currentUser.avatar_url || null,...replyData
+          file_url:file.url,file_name:file.name,file_type:file.type,avatar_url:currentUser.avatar_url || null,...replyPayload()
         }]).select("*").single();
         if(error)throw error;
+        commitSentMessage(optimistic, data);
         cancelReply(); clearFile();
-        if(message) replaceOptimisticMessage("group", tempId, data);
-        else if(data) renderMessage(data);
       }catch(err){
-        if(message) removeOptimisticMessage("group", tempId);
-        showToast("Gagal mengirim pesan grup: "+err.message, "error", "Gagal");
+        removeOptimisticMessage(optimistic);
+        showToast("Gagal mengirim pesan grup: "+err.message, "error", "Gagal")
       }
     }
 
     async function sendPrivateMessage(message){
       if(!currentTargetUser){showToast("Pilih user dulu.", "warn", "Perhatian");return}
-      const tempId = "tmp_" + Date.now() + "_" + Math.random().toString(16).slice(2);
+      const optimistic = message ? addOptimisticMessage("private", message) : null;
       const key=makeConversationKey(currentUser.id,currentTargetUser.id);
-      const replyData = replyPayload();
-      const hasFile = !!selectedFile;
-      const tempMessage = {
-        id: tempId,
-        conversation_key: key,
-        sender_id: currentUser.id,
-        receiver_id: currentTargetUser.id,
-        username: currentUser.username,
-        display_name: currentUser.display_name,
-        message,
-        file_url: null,
-        file_name: hasFile ? selectedFile.name : null,
-        file_type: hasFile ? (selectedFile.type || "application/octet-stream") : null,
-        avatar_url: currentUser.avatar_url || null,
-        created_at: new Date().toISOString(),
-        is_deleted: false,
-        ...replyData
-      };
-
-      if(message){
-        messageInput.value="";
-        addOptimisticMessage("private", tempMessage);
-        lastPrivatePreview[currentTargetUser.id]=makePreviewText(tempMessage, "private");
-        renderUsers();
-      }
-
+      messageInput.value="";
       try{
         const file=await uploadFile();
-        if(!message) messageInput.value="";
         const {data,error}=await supabaseClient.from("private_messages").insert([{
           conversation_key:key,sender_id:currentUser.id,receiver_id:currentTargetUser.id,username:currentUser.username,display_name:currentUser.display_name,message,
-          file_url:file.url,file_name:file.name,file_type:file.type,avatar_url:currentUser.avatar_url || null,...replyData
+          file_url:file.url,file_name:file.name,file_type:file.type,avatar_url:currentUser.avatar_url || null,...replyPayload()
         }]).select("*").single();
         if(error)throw error;
+        commitSentMessage(optimistic, data);
         cancelReply(); clearFile();
-        if(message) replaceOptimisticMessage("private", tempId, data);
-        else if(data) renderMessage(data);
         if(!visibleUsers.some(u=>u.id===currentTargetUser.id)){visibleUsers.push(currentTargetUser);renderUsers()}
       }catch(err){
-        if(message) removeOptimisticMessage("private", tempId);
-        showToast("Gagal mengirim pesan pribadi: "+err.message, "error", "Gagal");
+        removeOptimisticMessage(optimistic);
+        showToast("Gagal mengirim pesan pribadi: "+err.message, "error", "Gagal")
       }
     }
 
