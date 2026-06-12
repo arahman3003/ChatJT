@@ -2400,6 +2400,38 @@
     let activeReactionTarget=null;
     const REACTION_OPTIONS=["👍","😂","❤️","😮","😢","🔥"];
     let selectedFile=null, replyTo=null, editingMessage=null;
+    const optimisticMessageIds = new Set();
+
+    function addOptimisticMessage(mode, tempMessage){
+      const empty = messagesDiv.querySelector(".empty");
+      if(empty) messagesDiv.innerHTML = "";
+      optimisticMessageIds.add(mode + "-" + tempMessage.id);
+      currentMessagesCache = [...(currentMessagesCache || []), tempMessage];
+      renderMessage(tempMessage);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    function replaceOptimisticMessage(mode, tempId, realMessage){
+      optimisticMessageIds.delete(mode + "-" + tempId);
+      const tempEl = messagesDiv.querySelector(`[data-msg-id="${mode}-${tempId}"]`);
+      if(tempEl) tempEl.remove();
+      currentMessagesCache = (currentMessagesCache || []).filter(function(msg){ return msg.id !== tempId; });
+      if(realMessage){
+        currentMessagesCache.push(realMessage);
+        renderMessage(realMessage);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      }
+    }
+
+    function removeOptimisticMessage(mode, tempId){
+      optimisticMessageIds.delete(mode + "-" + tempId);
+      const tempEl = messagesDiv.querySelector(`[data-msg-id="${mode}-${tempId}"]`);
+      if(tempEl) tempEl.remove();
+      currentMessagesCache = (currentMessagesCache || []).filter(function(msg){ return msg.id !== tempId; });
+      if(!(currentMessagesCache || []).length){
+        messagesDiv.innerHTML = `<p class="empty">Belum ada pesan.</p>`;
+      }
+    }
 
     function hideLoading(){
       if(loadingOverlay) loadingOverlay.style.display = "none";
@@ -3918,32 +3950,95 @@ function canManageGroups(){
 
     async function sendGroupMessage(message){
       if(!currentGroup){showToast("Pilih grup dulu.", "warn", "Perhatian");return}
+      const tempId = "tmp_" + Date.now() + "_" + Math.random().toString(16).slice(2);
+      const replyData = replyPayload();
+      const hasFile = !!selectedFile;
+      const tempMessage = {
+        id: tempId,
+        group_id: currentGroup.id,
+        user_id: currentUser.id,
+        username: currentUser.username,
+        display_name: currentUser.display_name,
+        message,
+        file_url: null,
+        file_name: hasFile ? selectedFile.name : null,
+        file_type: hasFile ? (selectedFile.type || "application/octet-stream") : null,
+        avatar_url: currentUser.avatar_url || null,
+        created_at: new Date().toISOString(),
+        is_deleted: false,
+        ...replyData
+      };
+
+      if(message){
+        messageInput.value="";
+        addOptimisticMessage("group", tempMessage);
+        lastGroupPreview[currentGroup.id]=makePreviewText(tempMessage, "group");
+        renderGroups();
+      }
+
       try{
         const file=await uploadFile();
-        messageInput.value="";
-        const {error}=await supabaseClient.from("messages").insert([{
+        if(!message) messageInput.value="";
+        const {data,error}=await supabaseClient.from("messages").insert([{
           group_id:currentGroup.id,user_id:currentUser.id,username:currentUser.username,display_name:currentUser.display_name,message,
-          file_url:file.url,file_name:file.name,file_type:file.type,avatar_url:currentUser.avatar_url || null,...replyPayload()
-        }]);
+          file_url:file.url,file_name:file.name,file_type:file.type,avatar_url:currentUser.avatar_url || null,...replyData
+        }]).select("*").single();
         if(error)throw error;
         cancelReply(); clearFile();
-      }catch(err){showToast("Gagal mengirim pesan grup: "+err.message, "error", "Gagal")}
+        if(message) replaceOptimisticMessage("group", tempId, data);
+        else if(data) renderMessage(data);
+      }catch(err){
+        if(message) removeOptimisticMessage("group", tempId);
+        showToast("Gagal mengirim pesan grup: "+err.message, "error", "Gagal");
+      }
     }
 
     async function sendPrivateMessage(message){
       if(!currentTargetUser){showToast("Pilih user dulu.", "warn", "Perhatian");return}
+      const tempId = "tmp_" + Date.now() + "_" + Math.random().toString(16).slice(2);
+      const key=makeConversationKey(currentUser.id,currentTargetUser.id);
+      const replyData = replyPayload();
+      const hasFile = !!selectedFile;
+      const tempMessage = {
+        id: tempId,
+        conversation_key: key,
+        sender_id: currentUser.id,
+        receiver_id: currentTargetUser.id,
+        username: currentUser.username,
+        display_name: currentUser.display_name,
+        message,
+        file_url: null,
+        file_name: hasFile ? selectedFile.name : null,
+        file_type: hasFile ? (selectedFile.type || "application/octet-stream") : null,
+        avatar_url: currentUser.avatar_url || null,
+        created_at: new Date().toISOString(),
+        is_deleted: false,
+        ...replyData
+      };
+
+      if(message){
+        messageInput.value="";
+        addOptimisticMessage("private", tempMessage);
+        lastPrivatePreview[currentTargetUser.id]=makePreviewText(tempMessage, "private");
+        renderUsers();
+      }
+
       try{
         const file=await uploadFile();
-        const key=makeConversationKey(currentUser.id,currentTargetUser.id);
-        messageInput.value="";
-        const {error}=await supabaseClient.from("private_messages").insert([{
+        if(!message) messageInput.value="";
+        const {data,error}=await supabaseClient.from("private_messages").insert([{
           conversation_key:key,sender_id:currentUser.id,receiver_id:currentTargetUser.id,username:currentUser.username,display_name:currentUser.display_name,message,
-          file_url:file.url,file_name:file.name,file_type:file.type,avatar_url:currentUser.avatar_url || null,...replyPayload()
-        }]);
+          file_url:file.url,file_name:file.name,file_type:file.type,avatar_url:currentUser.avatar_url || null,...replyData
+        }]).select("*").single();
         if(error)throw error;
         cancelReply(); clearFile();
+        if(message) replaceOptimisticMessage("private", tempId, data);
+        else if(data) renderMessage(data);
         if(!visibleUsers.some(u=>u.id===currentTargetUser.id)){visibleUsers.push(currentTargetUser);renderUsers()}
-      }catch(err){showToast("Gagal mengirim pesan pribadi: "+err.message, "error", "Gagal")}
+      }catch(err){
+        if(message) removeOptimisticMessage("private", tempId);
+        showToast("Gagal mengirim pesan pribadi: "+err.message, "error", "Gagal");
+      }
     }
 
     function openImagePopup(url){
