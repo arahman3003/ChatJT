@@ -103,6 +103,9 @@
     .mini-btn.delete:hover{background:rgba(239,68,68,.22);color:#fecaca}
     .mini-btn svg{width:15px;height:15px;stroke:currentColor}
     .text{font-size:15px;line-height:1.45;white-space:pre-wrap}
+    .text .chat-link{color:#7dd3fc;font-weight:900;text-decoration:underline;text-underline-offset:3px;word-break:break-all;text-shadow:0 0 10px rgba(56,189,248,.35)}
+    .message.me .text .chat-link{color:#bbf7d0;text-shadow:0 0 10px rgba(134,239,172,.35)}
+    .text .chat-link:hover{filter:brightness(1.2)}
     .text.emoji-only{line-height:1.2;letter-spacing:.02em;word-break:break-word}
     .text.emoji-only.size-xl{font-size:44px}
     .text.emoji-only.size-lg{font-size:36px}
@@ -2461,6 +2464,40 @@ function showLoginPage(){
 
     function escapeHtml(text){const div=document.createElement("div");div.textContent=text||"";return div.innerHTML}
 
+    function linkifyMessageText(text){
+      const raw = String(text || "");
+      const urlRegex = /((?:https?:\/\/|www\.)[^\s<>"']+)/gi;
+      let html = "";
+      let lastIndex = 0;
+
+      raw.replace(urlRegex, function(match, url, index){
+        html += escapeHtml(raw.slice(lastIndex, index));
+
+        let cleanUrl = url;
+        let trailing = "";
+        while(cleanUrl && /[.,!?;:)\]}]+$/.test(cleanUrl)){
+          trailing = cleanUrl.slice(-1) + trailing;
+          cleanUrl = cleanUrl.slice(0, -1);
+        }
+
+        const href = cleanUrl.toLowerCase().startsWith("www.") ? "https://" + cleanUrl : cleanUrl;
+        const safeHref = escapeHtml(href);
+        const safeText = escapeHtml(cleanUrl);
+
+        html += `<a class="chat-link" href="${safeHref}" target="_blank" rel="noopener noreferrer">${safeText}</a>${escapeHtml(trailing)}`;
+        lastIndex = index + match.length;
+        return match;
+      });
+
+      html += escapeHtml(raw.slice(lastIndex));
+      return html;
+    }
+
+    function renderMessageText(text, deleted){
+      if(deleted) return "<i>Pesan telah dihapus</i>";
+      return linkifyMessageText(text || "");
+    }
+
     function showToast(message, type="success", title="Info"){
       if(!toastWrap)return;
       const toast=document.createElement("div");
@@ -3701,7 +3738,7 @@ function canManageGroups(){
           </div>
         </div>
         ${replyHtml}
-        <div class="${textClass}">${deleted?"<i>Pesan telah dihapus</i>":escapeHtml(data.message||"")}</div>
+        <div class="${textClass}">${renderMessageText(data.message || "", deleted)}</div>
         ${fileHtml}
         <div class="msg-bottom">
           ${reactionHtml}
