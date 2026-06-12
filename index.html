@@ -103,9 +103,9 @@
     .mini-btn.delete:hover{background:rgba(239,68,68,.22);color:#fecaca}
     .mini-btn svg{width:15px;height:15px;stroke:currentColor}
     .text{font-size:15px;line-height:1.45;white-space:pre-wrap}
-    .text .chat-link{color:#7dd3fc;font-weight:900;text-decoration:underline;text-underline-offset:3px;word-break:break-all;text-shadow:0 0 10px rgba(56,189,248,.35)}
-    .message.me .text .chat-link{color:#bbf7d0;text-shadow:0 0 10px rgba(134,239,172,.35)}
-    .text .chat-link:hover{filter:brightness(1.2)}
+    .text .chat-link{color:inherit;font-weight:700;text-decoration:underline;text-underline-offset:2px;word-break:break-all;text-shadow:none;filter:none}
+    .message.me .text .chat-link{color:inherit;text-shadow:none;filter:none}
+    .text .chat-link:hover{filter:none;text-shadow:none}
     .text.emoji-only{line-height:1.2;letter-spacing:.02em;word-break:break-word}
     .text.emoji-only.size-xl{font-size:44px}
     .text.emoji-only.size-lg{font-size:36px}
@@ -2125,6 +2125,25 @@
   }
 </style>
 
+
+<style id="chat-link-no-glow-final">
+  .text .chat-link,
+  .message.me .text .chat-link{
+    color:inherit !important;
+    font-weight:700 !important;
+    text-decoration:underline !important;
+    text-underline-offset:2px !important;
+    text-shadow:none !important;
+    filter:none !important;
+    box-shadow:none !important;
+  }
+  .text .chat-link:hover,
+  .message.me .text .chat-link:hover{
+    color:inherit !important;
+    text-shadow:none !important;
+    filter:none !important;
+  }
+</style>
 </head>
 
 <body>
